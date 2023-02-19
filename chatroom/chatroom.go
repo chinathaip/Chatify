@@ -6,7 +6,7 @@ import (
 
 type CR struct {
 	name       string
-	users      []*websocket.Conn
+	users      map[*websocket.Conn]bool
 	Broadcast  chan []byte
 	Register   chan *websocket.Conn
 	Unregister chan *websocket.Conn
@@ -15,7 +15,7 @@ type CR struct {
 func New() *CR {
 	return &CR{
 		name:       "some chat room",
-		users:      []*websocket.Conn{},
+		users:      make(map[*websocket.Conn]bool),
 		Broadcast:  make(chan []byte),
 		Register:   make(chan *websocket.Conn),
 		Unregister: make(chan *websocket.Conn),
@@ -28,7 +28,7 @@ func (room *CR) Init() {
 		case message := <-room.Broadcast:
 			room.broadcastMsg(room.users, message)
 		case client := <-room.Register:
-			room.users = append(room.users, client)
+			room.users[client] = true
 		}
 	}
 }
