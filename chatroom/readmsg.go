@@ -1,4 +1,4 @@
-package socket
+package chatroom
 
 import (
 	"log"
@@ -6,12 +6,13 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func ReadLoops(conn *websocket.Conn) error {
+func (room *CR) ReadMessage(conn *websocket.Conn, broadcast chan []byte) error {
 	for {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
 			return err
 		}
+		broadcast <- message
 
 		log.Printf("Received Message: %s\n", message)
 	}
