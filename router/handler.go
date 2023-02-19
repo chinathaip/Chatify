@@ -26,7 +26,7 @@ func handleSocket(room *chatroom.CR) echo.HandlerFunc {
 
 		room.Register <- conn
 		room.ReadMessage(conn, room.Broadcast)
-
+		room.Unregister <- conn
 		return nil
 	}
 }

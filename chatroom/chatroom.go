@@ -29,6 +29,8 @@ func (room *CR) Init() {
 			room.broadcastMsg(room.users, message)
 		case client := <-room.Register:
 			room.users[client] = true
+		case client := <-room.Unregister:
+			room.users[client] = false
 		}
 	}
 }
