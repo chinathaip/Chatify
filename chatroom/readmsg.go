@@ -6,13 +6,13 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func (room *CR) ReadMessage(conn *websocket.Conn, broadcast chan []byte) error {
+func (room *R) ReadMessage(conn *websocket.Conn) error {
 	for {
-		_, message, err := conn.ReadMessage()
+		_, message, err := conn.ReadMessage() //read received message
 		if err != nil {
 			return err
 		}
-		broadcast <- message
+		room.Broadcast <- message //notify the room for new message
 
 		log.Printf("Received Message: %s\n", message)
 	}

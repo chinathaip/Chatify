@@ -32,12 +32,12 @@ func handleSocket(rooms *sync.Map) echo.HandlerFunc {
 		}
 		defer conn.Close()
 
-		room := data.(*chatroom.CR)
+		room := data.(*chatroom.R)
 		go room.Init()
 
-		room.Register <- conn
-		room.ReadMessage(conn, room.Broadcast)
-		room.Unregister <- conn
+		room.Register <- conn //notify room when user join
+		room.ReadMessage(conn)
+		room.Unregister <- conn //notify room when user left
 		return nil
 	}
 }

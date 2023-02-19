@@ -9,8 +9,9 @@ import (
 
 func RegRoute() *echo.Echo {
 	e := echo.New()
+	rooms := new(sync.Map)
 	e.Use(middleware.Logger())
-	e.GET("/ws", handleSocket(new(sync.Map)))
+	e.GET("/ws", handleSocket(rooms))
 
 	return e
 }

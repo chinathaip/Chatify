@@ -6,7 +6,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func (room *CR) broadcastMsg(users map[*websocket.Conn]bool, message []byte) {
+func (room *R) broadcastMsg(users map[*websocket.Conn]bool, message []byte) {
 	for user, active := range users {
 		if active {
 			user.WriteMessage(websocket.TextMessage, []byte("Welcome to: "+room.name))
