@@ -1,7 +1,8 @@
 package router
 
 import (
-	"github.com/chinathaip/chatify/chatroom"
+	"sync"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -9,11 +10,7 @@ import (
 func RegRoute() *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.Logger())
-
-	room := chatroom.New()
-	go room.Init()
-
-	e.GET("/ws", handleSocket(room))
+	e.GET("/ws", handleSocket(new(sync.Map)))
 
 	return e
 }

@@ -12,9 +12,9 @@ type CR struct {
 	Unregister chan *websocket.Conn
 }
 
-func New() *CR {
+func New(roomName string) *CR {
 	return &CR{
-		name:       "some chat room",
+		name:       roomName,
 		users:      make(map[*websocket.Conn]bool),
 		Broadcast:  make(chan []byte),
 		Register:   make(chan *websocket.Conn),

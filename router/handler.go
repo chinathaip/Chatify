@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"sync"
 
 	"github.com/chinathaip/chatify/chatroom"
 	"github.com/gorilla/websocket"
@@ -16,13 +17,23 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func handleSocket(room *chatroom.CR) echo.HandlerFunc {
+func handleSocket(rooms *sync.Map) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		roomName := c.QueryParam("roomName")
+		if roomName == "" {
+			roomName = "Test Chat Room"
+		}
+
+		data, _ := rooms.LoadOrStore(roomName, chatroom.New(roomName))
+
 		conn, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 		if err != nil {
 			return err
 		}
 		defer conn.Close()
+
+		room := data.(*chatroom.CR)
+		go room.Init()
 
 		room.Register <- conn
 		room.ReadMessage(conn, room.Broadcast)
