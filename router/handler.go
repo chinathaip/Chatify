@@ -7,6 +7,7 @@ import (
 	"github.com/chinathaip/chatify/chatroom"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
+	"golang.org/x/net/context"
 )
 
 var upgrader = websocket.Upgrader{
@@ -23,8 +24,8 @@ func handleSocket(rooms *sync.Map) echo.HandlerFunc {
 		if roomName == "" {
 			roomName = "Test Chat Room"
 		}
-
-		data, _ := rooms.LoadOrStore(roomName, chatroom.New(roomName))
+		ctx, cancel := context.WithCancel(context.Background())
+		data, _ := rooms.LoadOrStore(roomName, chatroom.New(roomName, ctx))
 
 		conn, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 		if err != nil {
@@ -36,7 +37,8 @@ func handleSocket(rooms *sync.Map) echo.HandlerFunc {
 		go room.Init()
 
 		room.Register <- conn //notify room when user join
-		room.ReadMessage(conn)
+		go room.MonitorUser(cancel)
+		room.ReadMsgFrom(conn)
 		room.Unregister <- conn //notify room when user left
 		return nil
 	}

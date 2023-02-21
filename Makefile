@@ -6,3 +6,6 @@ build:
 
 run: build
 	./bin/app
+
+unit:
+	go test -v ./...
