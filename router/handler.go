@@ -5,14 +5,14 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/chinathaip/chatify/db"
+	"github.com/chinathaip/chatify/service"
 	"github.com/labstack/echo/v4"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 type Handler struct {
-	messageModel db.MessageModel
+	messageService service.MessageModel
 }
 
 func NewHandler(dsn string) *Handler {
@@ -21,7 +21,7 @@ func NewHandler(dsn string) *Handler {
 		log.Fatalln("Error connecting to db: ", err)
 	}
 	return &Handler{
-		messageModel: db.MessageModel{DB: gorm},
+		messageService: service.MessageModel{DB: gorm},
 	}
 }
 func (h *Handler) handleGetMessages(c echo.Context) error {
@@ -31,7 +31,7 @@ func (h *Handler) handleGetMessages(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	msg, err := h.messageModel.GetMessagesInChat(chatID)
+	msg, err := h.messageService.GetMessagesInChat(chatID)
 	if len(msg) == 0 {
 		log.Println("Error getting messages: ", err) //never show SQL error to client
 		return echo.ErrNotFound

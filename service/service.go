@@ -1,4 +1,4 @@
-package db
+package service
 
 import "gorm.io/gorm"
 
@@ -14,3 +14,5 @@ func (m *MessageModel) GetMessagesInChat(chatID int) ([]Message, error) {
 	}
 	return msg, nil
 }
+
+//TODO: StoreNewMessage (POST `/messages/:chat_id`)
