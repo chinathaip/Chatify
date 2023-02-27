@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/chinathaip/chatify/chatroom"
 	"github.com/chinathaip/chatify/config"
 	"github.com/chinathaip/chatify/router"
 )
@@ -17,7 +18,10 @@ func main() {
 	fmt.Println("Hello Chatify")
 
 	cfg := config.All()
-	e := router.RegRoute()
+	ctx, cancel := context.WithCancel(context.Background())
+	h := chatroom.NewHub()
+	go h.Init(ctx)
+	e := router.RegRoute(h)
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
@@ -31,6 +35,7 @@ func main() {
 	}()
 
 	<-signals
+	cancel() //close hub
 	if err := srv.Shutdown(context.Background()); err != nil {
 		log.Fatalf("Error Shutting down! %s", err.Error())
 	}
