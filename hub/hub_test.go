@@ -37,7 +37,7 @@ func (c *mockConnection) ReadMessage() (messageType int, data []byte, err error)
 
 func syncRoomSize(h *H, room string, expectedLength int, wg *sync.WaitGroup) {
 	for {
-		if len(h.Rooms[room].users) == expectedLength {
+		if len(h.getRoom(room).users) == expectedLength {
 			break
 		}
 	}
@@ -83,14 +83,14 @@ func TestInit(t *testing.T) {
 		h.Register <- client2 //client 2 join room 1
 		go syncRoomSize(h, "Room1", 2, wg)
 		wg.Wait() //wait for both register to finish
-		assert.Equal(t, 2, len(h.Rooms["Room1"].users))
+		assert.Equal(t, 2, len(h.getRoom("Room1").users))
 
 		wg.Add(1)
 		h.Unregister <- client1 //client 1 leave room 1
 		syncRoomSize(h, "Room1", 1, wg)
 
 		wg.Wait()
-		assert.Equal(t, 1, len(h.Rooms["Room1"].users))
+		assert.Equal(t, 1, len(h.getRoom("Room1").users))
 	})
 
 	t.Run("Room should be terminated when last user left", func(t *testing.T) {
@@ -102,14 +102,14 @@ func TestInit(t *testing.T) {
 		h.Register <- client
 		go syncRoomSize(h, "Room1", 1, wg)
 		wg.Wait()
-		assert.Equal(t, 1, len(h.Rooms["Room1"].users))
+		assert.Equal(t, 1, len(h.getRoom("Room1").users))
 
 		wg.Add(1)
 		h.Unregister <- client
 		go syncRoomSize(h, "Room1", 0, wg)
 
 		wg.Wait()
-		assert.Nil(t, h.Rooms["Room1"])
+		assert.Nil(t, h.getRoom("Room1"))
 	})
 
 	t.Run("Broadcast message only within the room", func(t *testing.T) {
@@ -130,8 +130,8 @@ func TestInit(t *testing.T) {
 		h.Register <- client3
 		go syncRoomSize(h, "Room999", 1, wg)
 		wg.Wait()
-		assert.Equal(t, 2, len(h.Rooms["Room1"].users))
-		assert.Equal(t, 1, len(h.Rooms["Room999"].users))
+		assert.Equal(t, 2, len(h.getRoom("Room1").users))
+		assert.Equal(t, 1, len(h.getRoom("Room999").users))
 
 		wg.Add(1)
 		h.Broadcast <- &Message{"Room1", []byte("Hello!")} //message for user in room 1 only
@@ -167,23 +167,23 @@ func TestReadMsgFrom(t *testing.T) {
 		h.Register <- client2
 		go syncRoomSize(h, "Room1", 2, wg)
 		wg.Wait()
-		assert.Equal(t, 2, len(h.Rooms["Room1"].users))
+		assert.Equal(t, 2, len(h.getRoom("Room1").users))
 
 		wg.Add(1)
 		err := client1.conn.WriteMessage(websocket.TextMessage, []byte("Hello World"))
 		assert.NoError(t, err)
-
 		result := <-h.Broadcast
-		assert.Equal(t, "Hello World", string(result.data))
-		go func() {
+		go func(data string) {
 			for {
-				if mockConnection1.hasSent && mockConnection2.hasReceived {
+				if mockConnection1.hasSent && mockConnection2.hasReceived && data == "Hello World" {
 					break
 				}
 			}
 			defer wg.Done()
-		}()
+		}(string(result.data))
+
 		wg.Wait()
+		assert.Equal(t, "Hello World", string(result.data))
 		assert.True(t, mockConnection1.hasSent)
 		assert.True(t, mockConnection2.hasReceived)
 	})
