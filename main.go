@@ -9,8 +9,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/chinathaip/chatify/chatroom"
 	"github.com/chinathaip/chatify/config"
+	"github.com/chinathaip/chatify/hub"
 	"github.com/chinathaip/chatify/router"
 )
 
@@ -19,7 +19,7 @@ func main() {
 
 	cfg := config.All()
 	ctx, cancel := context.WithCancel(context.Background())
-	h := chatroom.NewHub()
+	h := hub.New()
 	go h.Init(ctx)
 	e := router.RegRoute(h)
 

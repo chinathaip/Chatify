@@ -1,12 +1,12 @@
-package chatroom
+package hub
 
-type R struct {
+type Room struct {
 	name  string
 	users map[connection]bool
 }
 
-func New(roomName string) *R {
-	return &R{
+func NewRoom(roomName string) *Room {
+	return &Room{
 		name:  roomName,
 		users: make(map[connection]bool),
 	}

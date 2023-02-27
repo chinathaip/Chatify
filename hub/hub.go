@@ -1,4 +1,4 @@
-package chatroom
+package hub
 
 import (
 	"context"
@@ -7,30 +7,30 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type Hub struct {
+type H struct {
 	Broadcast  chan *Message
 	Register   chan *Client
 	Unregister chan *Client
-	Rooms      map[string]*R
+	Rooms      map[string]*Room
 }
 
-func NewHub() *Hub {
-	return &Hub{
+func New() *H {
+	return &H{
 		Broadcast:  make(chan *Message),
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
-		Rooms:      make(map[string]*R),
+		Rooms:      make(map[string]*Room),
 	}
 }
 
-func (h *Hub) Init(ctx context.Context) {
+func (h *H) Init(ctx context.Context) {
 run:
 	for {
 		select {
 		case client := <-h.Register:
 			room := h.Rooms[client.roomName] //get room from hub
 			if room == nil {                 //if room doesnt exist
-				room = New(client.roomName) //create new room
+				room = NewRoom(client.roomName) //create new room
 			}
 			room.users[client.conn] = true  //add client to the room
 			h.Rooms[client.roomName] = room //add room to the hub
@@ -63,7 +63,7 @@ run:
 	}
 }
 
-func (h *Hub) ReadMsgFrom(client *Client) {
+func (h *H) ReadMsgFrom(client *Client) {
 	for {
 		_, data, err := client.conn.ReadMessage() //read received message
 		if err != nil {

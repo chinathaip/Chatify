@@ -1,4 +1,4 @@
-package chatroom
+package hub
 
 import (
 	"context"
@@ -35,7 +35,7 @@ func (c *mockConnection) ReadMessage() (messageType int, data []byte, err error)
 	return 0, []byte(c.msg), nil
 }
 
-func syncRoomSize(h *Hub, room string, expectedLength int, wg *sync.WaitGroup) {
+func syncRoomSize(h *H, room string, expectedLength int, wg *sync.WaitGroup) {
 	for {
 		if len(h.Rooms[room].users) == expectedLength {
 			break
@@ -47,7 +47,7 @@ func syncRoomSize(h *Hub, room string, expectedLength int, wg *sync.WaitGroup) {
 func TestInit(t *testing.T) {
 
 	t.Run("Register new client should create new room if not exists", func(t *testing.T) {
-		h := NewHub()
+		h := New()
 		go h.Init(context.Background())
 		client := NewClient("Test room", &websocket.Conn{})
 
@@ -59,10 +59,10 @@ func TestInit(t *testing.T) {
 	})
 
 	t.Run("Register new client should add new user to the existing room", func(t *testing.T) {
-		h := NewHub()
+		h := New()
 		go h.Init(context.Background())
 		client2 := NewClient("Room1", &websocket.Conn{})
-		h.Rooms["Room1"] = New("Room1")
+		h.Rooms["Room1"] = NewRoom("Room1")
 
 		h.Register <- client2
 		_, found1 := h.Rooms["Room1"]
@@ -72,7 +72,7 @@ func TestInit(t *testing.T) {
 	})
 
 	t.Run("Unregister should remove user from the existing room", func(t *testing.T) {
-		h := NewHub()
+		h := New()
 		go h.Init(context.Background())
 		client1 := NewClient("Room1", &websocket.Conn{})
 		client2 := NewClient("Room1", &websocket.Conn{})
@@ -94,7 +94,7 @@ func TestInit(t *testing.T) {
 	})
 
 	t.Run("Room should be terminated when last user left", func(t *testing.T) {
-		h := NewHub()
+		h := New()
 		go h.Init(context.Background())
 		client := NewClient("Room1", &websocket.Conn{})
 		wg := &sync.WaitGroup{}
@@ -113,7 +113,7 @@ func TestInit(t *testing.T) {
 	})
 
 	t.Run("Broadcast message only within the room", func(t *testing.T) {
-		h := NewHub()
+		h := New()
 		go h.Init(context.Background())
 		mockConnection1 := newMock()
 		mockConnection2 := newMock()
@@ -153,7 +153,7 @@ func TestInit(t *testing.T) {
 
 func TestReadMsgFrom(t *testing.T) {
 	t.Run("Read message from client correctly", func(t *testing.T) {
-		h := NewHub()
+		h := New()
 		go h.Init(context.Background())
 		mockConnection1 := newMock()
 		mockConnection2 := newMock()
