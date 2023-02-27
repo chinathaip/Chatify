@@ -36,5 +36,5 @@ func (h *Handler) handleGetMessages(c echo.Context) error {
 		log.Println("Error getting messages: ", err) //never show SQL error to client
 		return echo.ErrNotFound
 	}
-	return c.JSON(http.StatusOK, map[string]any{"chat_id": 1, "messages": msg})
+	return c.JSON(http.StatusOK, map[string]any{"chat_id": chatID, "messages": msg})
 }
