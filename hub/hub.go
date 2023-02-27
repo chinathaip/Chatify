@@ -3,6 +3,7 @@ package hub
 import (
 	"context"
 	"log"
+	"sync"
 
 	"github.com/gorilla/websocket"
 )
@@ -12,6 +13,7 @@ type H struct {
 	Register   chan *Client
 	Unregister chan *Client
 	Rooms      map[string]*Room
+	mutex      sync.RWMutex
 }
 
 func New() *H {
@@ -20,7 +22,26 @@ func New() *H {
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
 		Rooms:      make(map[string]*Room),
+		mutex:      sync.RWMutex{},
 	}
+}
+
+func (h *H) setNewRoom(roomName string, r *Room) {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+	h.Rooms[roomName] = r
+}
+
+func (h *H) getRoom(roomName string) *Room {
+	h.mutex.RLock()
+	defer h.mutex.RUnlock()
+	return h.Rooms[roomName]
+}
+
+func (h *H) deleteRoom(roomName string) {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+	delete(h.Rooms, roomName)
 }
 
 func (h *H) Init(ctx context.Context) {
@@ -28,23 +49,24 @@ run:
 	for {
 		select {
 		case client := <-h.Register:
-			room := h.Rooms[client.roomName] //get room from hub
-			if room == nil {                 //if room doesnt exist
-				room = NewRoom(client.roomName) //create new room
+			room := h.getRoom(client.roomName)
+			if room == nil { //if room doesnt exist
+				room = NewRoom(client.roomName)
 			}
-			room.users[client.conn] = true  //add client to the room
-			h.Rooms[client.roomName] = room //add room to the hub
+			room.setNewUser(client.conn)
+			h.setNewRoom(client.roomName, room)
 
 		case client := <-h.Unregister:
-			room := h.Rooms[client.roomName]
+			room := h.getRoom(client.roomName)
 			if room != nil {
-				delete(room.users, client.conn) //delete client from room
-				if len(room.users) == 0 {       //if no one is left in the room
-					delete(h.Rooms, client.roomName) //delete the room from the hub
+				room.deleteUser(client.conn)
+				if len(room.users) == 0 { //if no one is left in the room
+					h.deleteRoom(client.roomName)
 				}
 			}
+
 		case message := <-h.Broadcast:
-			room := h.Rooms[message.roomName] //get room to send the message
+			room := h.getRoom(message.roomName) //get room to send the message
 			if room != nil {
 				for user, active := range room.users {
 					if !active {
@@ -57,6 +79,7 @@ run:
 					log.Printf("Broadcasting to : %s with message %s", user.RemoteAddr(), message.data)
 				}
 			}
+
 		case <-ctx.Done():
 			break run
 		}
