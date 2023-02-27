@@ -2,8 +2,8 @@ package chatroom
 
 import (
 	"context"
+	"sync"
 	"testing"
-	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
@@ -41,27 +41,43 @@ func TestInit(t *testing.T) {
 		go h.Init(context.Background())
 		client1 := NewClient("Room1", &websocket.Conn{})
 		client2 := NewClient("Room1", &websocket.Conn{})
+		//wait for hub to finish register/unregister client first before continue
+		var wg sync.WaitGroup
 
+		wg.Add(2)
 		h.Register <- client1 //client 1 join room 1
-		time.Sleep(1 * time.Second)
+		go func() {
+			for {
+				if len(h.Rooms["Room1"].users) == 1 {
+					break
+				}
+			}
+			defer wg.Done()
+		}()
 		h.Register <- client2 //client 2 join room 1
-		time.Sleep(1 * time.Second)
+		go func() {
+			for {
+				if len(h.Rooms["Room1"].users) == 2 {
+					break
+				}
+			}
+			defer wg.Done()
+		}()
+		wg.Wait()
 		assert.Equal(t, 2, len(h.Rooms["Room1"].users))
 
+		wg.Add(1)
 		h.Unregister <- client1 //client 1 leave room 1
-		time.Sleep(1 * time.Second)
+		go func() {
+			for {
+				if len(h.Rooms["Room1"].users) == 1 {
+					break
+				}
+			}
+			defer wg.Done()
+		}()
+		wg.Wait()
 		assert.Equal(t, 1, len(h.Rooms["Room1"].users))
-
-		/*
-			Using time.Sleep is not recommended! -->
-
-			One way to achieve this is to use a synchronization primitive,
-			such as a channel or a wait group. For example,
-			you could create a channel and have the Hub send a message on this channel every time
-			it processes a Register or Unregister action. In your test,
-			you could then wait for the expected number of messages
-			to arrive on this channel before verifying the state of the room.
-		*/
 	})
 
 	// t.Run("Server receives and broadcasts message correctly", func(t *testing.T) {
