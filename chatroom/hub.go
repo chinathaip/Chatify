@@ -54,7 +54,7 @@ run:
 					if err != nil {
 						log.Printf("Error broadcasting message from %s", user.RemoteAddr())
 					}
-					log.Printf("Broadcasting to Room: %s with message %s", room.name, message.data)
+					log.Printf("Broadcasting to : %s with message %s", user.RemoteAddr(), message.data)
 				}
 			}
 		case <-ctx.Done():

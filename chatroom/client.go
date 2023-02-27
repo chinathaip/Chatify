@@ -1,13 +1,21 @@
 package chatroom
 
-import "github.com/gorilla/websocket"
+import (
+	"net"
+)
 
 type Client struct {
 	roomName string
-	conn     *websocket.Conn
+	conn     connection
 }
 
-func NewClient(roomName string, conn *websocket.Conn) *Client {
+type connection interface {
+	RemoteAddr() net.Addr
+	WriteMessage(messageType int, data []byte) error
+	ReadMessage() (messageType int, data []byte, err error)
+}
+
+func NewClient(roomName string, conn connection) *Client {
 	return &Client{
 		roomName: roomName,
 		conn:     conn,

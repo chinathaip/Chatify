@@ -2,12 +2,47 @@ package chatroom
 
 import (
 	"context"
+	"net"
 	"sync"
 	"testing"
 
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 )
+
+type mockConnection struct {
+	msg         string
+	hasReceived bool
+	hasSent     bool
+}
+
+func newMock() *mockConnection {
+	return &mockConnection{hasReceived: false, hasSent: false}
+}
+
+func (c *mockConnection) RemoteAddr() net.Addr {
+	return &net.IPAddr{}
+}
+
+func (c *mockConnection) WriteMessage(messageType int, data []byte) error {
+	c.msg = string(data)
+	c.hasReceived = true
+	return nil
+}
+
+func (c *mockConnection) ReadMessage() (messageType int, data []byte, err error) {
+	c.hasSent = true
+	return 0, []byte(c.msg), nil
+}
+
+func syncRoomSize(h *Hub, room string, expectedLength int, wg *sync.WaitGroup) {
+	for {
+		if len(h.Rooms[room].users) == expectedLength {
+			break
+		}
+	}
+	defer wg.Done()
+}
 
 func TestInit(t *testing.T) {
 
@@ -41,108 +76,115 @@ func TestInit(t *testing.T) {
 		go h.Init(context.Background())
 		client1 := NewClient("Room1", &websocket.Conn{})
 		client2 := NewClient("Room1", &websocket.Conn{})
-		//wait for hub to finish register/unregister client first before continue
-		var wg sync.WaitGroup
-
+		wg := &sync.WaitGroup{}
 		wg.Add(2)
 		h.Register <- client1 //client 1 join room 1
-		go func() {
-			for {
-				if len(h.Rooms["Room1"].users) == 1 {
-					break
-				}
-			}
-			defer wg.Done()
-		}()
+		go syncRoomSize(h, "Room1", 1, wg)
 		h.Register <- client2 //client 2 join room 1
-		go func() {
-			for {
-				if len(h.Rooms["Room1"].users) == 2 {
-					break
-				}
-			}
-			defer wg.Done()
-		}()
-		wg.Wait()
+		go syncRoomSize(h, "Room1", 2, wg)
+		wg.Wait() //wait for both register to finish
 		assert.Equal(t, 2, len(h.Rooms["Room1"].users))
 
 		wg.Add(1)
 		h.Unregister <- client1 //client 1 leave room 1
+		syncRoomSize(h, "Room1", 1, wg)
+
+		wg.Wait()
+		assert.Equal(t, 1, len(h.Rooms["Room1"].users))
+	})
+
+	t.Run("Room should be terminated when last user left", func(t *testing.T) {
+		h := NewHub()
+		go h.Init(context.Background())
+		client := NewClient("Room1", &websocket.Conn{})
+		wg := &sync.WaitGroup{}
+		wg.Add(1)
+		h.Register <- client
+		go syncRoomSize(h, "Room1", 1, wg)
+		wg.Wait()
+		assert.Equal(t, 1, len(h.Rooms["Room1"].users))
+
+		wg.Add(1)
+		h.Unregister <- client
+		go syncRoomSize(h, "Room1", 0, wg)
+
+		wg.Wait()
+		assert.Nil(t, h.Rooms["Room1"])
+	})
+
+	t.Run("Broadcast message only within the room", func(t *testing.T) {
+		h := NewHub()
+		go h.Init(context.Background())
+		mockConnection1 := newMock()
+		mockConnection2 := newMock()
+		mockConnection3 := newMock()
+		client1 := NewClient("Room1", mockConnection1)
+		client2 := NewClient("Room1", mockConnection2)
+		client3 := NewClient("Room999", mockConnection3) //different room
+		wg := &sync.WaitGroup{}
+		wg.Add(3)
+		h.Register <- client1
+		go syncRoomSize(h, "Room1", 1, wg)
+		h.Register <- client2
+		go syncRoomSize(h, "Room1", 2, wg)
+		h.Register <- client3
+		go syncRoomSize(h, "Room999", 1, wg)
+		wg.Wait()
+		assert.Equal(t, 2, len(h.Rooms["Room1"].users))
+		assert.Equal(t, 1, len(h.Rooms["Room999"].users))
+
+		wg.Add(1)
+		h.Broadcast <- &Message{"Room1", []byte("Hello!")} //message for user in room 1 only
 		go func() {
 			for {
-				if len(h.Rooms["Room1"].users) == 1 {
+				if mockConnection1.hasReceived && mockConnection2.hasReceived {
+					break
+				}
+			}
+			defer wg.Done()
+		}()
+
+		wg.Wait()
+		assert.True(t, mockConnection1.hasReceived)
+		assert.True(t, mockConnection2.hasReceived)
+		assert.False(t, mockConnection3.hasReceived) //client 3 should not receive the message
+	})
+}
+
+func TestReadMsgFrom(t *testing.T) {
+	t.Run("Read message from client correctly", func(t *testing.T) {
+		h := NewHub()
+		go h.Init(context.Background())
+		mockConnection1 := newMock()
+		mockConnection2 := newMock()
+		client1 := NewClient("Room1", mockConnection1)
+		client2 := NewClient("Room1", mockConnection2)
+		wg := &sync.WaitGroup{}
+		wg.Add(2)
+		h.Register <- client1
+		go h.ReadMsgFrom(client1)
+		go syncRoomSize(h, "Room1", 1, wg)
+		h.Register <- client2
+		go syncRoomSize(h, "Room1", 2, wg)
+		wg.Wait()
+		assert.Equal(t, 2, len(h.Rooms["Room1"].users))
+
+		wg.Add(1)
+		err := client1.conn.WriteMessage(websocket.TextMessage, []byte("Hello World"))
+		assert.NoError(t, err)
+
+		result := <-h.Broadcast
+		assert.Equal(t, "Hello World", string(result.data))
+		go func() {
+			for {
+				if mockConnection1.hasSent && mockConnection2.hasReceived {
 					break
 				}
 			}
 			defer wg.Done()
 		}()
 		wg.Wait()
-		assert.Equal(t, 1, len(h.Rooms["Room1"].users))
+		assert.True(t, mockConnection1.hasSent)
+		assert.True(t, mockConnection2.hasReceived)
 	})
-
-	// t.Run("Server receives and broadcasts message correctly", func(t *testing.T) {
-	// 	ctx, cancel := context.WithCancel(context.Background())
-	// 	h := NewHub()
-	// 	go h.Init(ctx)
-	// 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	// 		upgrader := websocket.Upgrader{}
-	// 		conn, err := upgrader.Upgrade(w, r, nil)
-	// 		assert.NoError(t, err)
-
-	// 		client := NewClient("Test Room", conn)
-	// 		h.Register <- client
-	// 		go h.ReadMsgFrom(client)
-	// 	}))
-	// 	defer server.Close()
-	// 	defer cancel()
-	// 	wsURL := "ws" + server.URL[4:]
-
-	// 	user1, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
-	// 	assert.NoError(t, err)
-
-	// 	expected := []byte("Test Message")
-	// 	err = user1.WriteMessage(websocket.TextMessage, expected)
-	// 	assert.NoError(t, err)
-
-	// 	assert.Equal(t, expected, <-h.Broadcast)
-	// })
-
 }
-
-// func TestMonitorUser(t *testing.T) {
-// 	t.Run("Server should terminate the chatroom when all user left", func(t *testing.T) {
-// 		ctx, cancel := context.WithCancel(context.Background())
-// 		room := New("Test Room", ctx)
-// 		go room.Init()
-// 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 			upgrader := websocket.Upgrader{}
-// 			conn, err := upgrader.Upgrade(w, r, nil)
-// 			assert.NoError(t, err)
-// 			room.Register <- conn
-// 			go room.ReadMsgFrom(conn)
-// 			go room.MonitorUser(cancel)
-// 			err = room.ReadMsgFrom(conn)
-// 			if err != nil {
-// 				if websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-// 					log.Printf("connection from %s is closed", conn.RemoteAddr().String())
-// 					room.Unregister <- conn //notify room when user left
-// 				}
-// 			}
-
-// 		}))
-// 		defer server.Close()
-
-// 		wsURL := "ws" + server.URL[4:]
-
-// 		user1, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
-// 		assert.NoError(t, err)
-
-// 		user2, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
-// 		assert.NoError(t, err)
-
-// 		user1.Close()
-// 		user2.Close()
-
-// 		// assert.
-// 	})
-// }
