@@ -21,7 +21,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	h := hub.New()
 	go h.Init(ctx)
-	e := router.RegRoute(h)
+	e := router.RegRoute(h, cfg.DBConnection)
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)

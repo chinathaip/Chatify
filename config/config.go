@@ -12,13 +12,15 @@ type Server struct {
 }
 
 type Config struct {
-	Server Server
+	Server       Server
+	DBConnection string
 }
 
 func All() Config {
 	loadEnv()
 	return Config{
-		Server: Server{Port: os.Getenv("PORT")},
+		Server:       Server{Port: os.Getenv("PORT")},
+		DBConnection: os.Getenv("DB_CONNECTION"),
 	}
 }
 

@@ -9,11 +9,13 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-func RegRoute(h *hub.H) *echo.Echo {
+func RegRoute(h *hub.H, dbURL string) *echo.Echo {
 	e := echo.New()
+	handler := NewHandler(dbURL)
 
 	e.Use(middleware.Logger())
 	e.GET("/ws", handleSocket(h))
+	e.GET("/messages/:chat_id", handler.handleGetMessages)
 
 	return e
 }
