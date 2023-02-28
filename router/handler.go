@@ -48,6 +48,23 @@ func (h *Handler) handleCreateNewChat(c echo.Context) error {
 	return c.JSON(http.StatusCreated, chat)
 }
 
+func (h *Handler) handleDeleteChat(c echo.Context) error {
+	param := c.QueryParam("chat_id")
+	id, err := strconv.Atoi(param)
+	if err != nil || id == 0 {
+		log.Println("Client has sent invalid request body")
+		return c.String(http.StatusBadRequest, "invalid param")
+	}
+
+	err = h.chatService.DeleteChat(id)
+	if err != nil {
+		log.Println("Internal error :", err)
+		return c.String(http.StatusInternalServerError, "something wrong on our end")
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"status": "deleted"})
+}
+
 func (h *Handler) handleGetMessages(c echo.Context) error {
 	id := c.Param("chat_id")
 	chatID, err := strconv.Atoi(id)

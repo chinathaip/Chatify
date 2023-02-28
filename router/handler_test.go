@@ -29,6 +29,10 @@ func (cs *mockChatService) GetAllChat() ([]service.Chat, error) {
 	}, nil
 }
 
+func (cs *mockChatService) DeleteChat(chatID int) error {
+	return nil
+}
+
 func (cs *mockChatService) CreateNewChat(*service.Chat) error {
 	return nil
 }

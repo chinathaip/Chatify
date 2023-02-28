@@ -65,7 +65,6 @@ run:
 			if h.chatService == nil {
 				continue
 			}
-
 			if id, exist := h.chatService.IsChatExist(client.roomName); exist {
 				room.id = id
 				continue
@@ -100,11 +99,11 @@ run:
 					log.Printf("Broadcasting to : %s with message %s", user.RemoteAddr(), message.data)
 
 				}
+
 				//store in db
 				if h.msgService == nil {
 					continue
 				}
-
 				msg := &service.Message{SenderID: 1, ChatID: room.id, Data: string(message.data)}
 				err := h.msgService.StoreNewMessage(msg)
 				if err != nil {

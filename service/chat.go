@@ -10,6 +10,7 @@ import (
 type ChatService interface {
 	GetAllChat() ([]Chat, error)
 	CreateNewChat(*Chat) error
+	DeleteChat(chatID int) error
 	IsChatExist(chatName string) (int, bool)
 }
 
@@ -29,6 +30,14 @@ func (m *ChatModel) GetAllChat() ([]Chat, error) {
 func (m *ChatModel) CreateNewChat(chat *Chat) error {
 	chat.CreatedAt = time.Now()
 	if err := m.DB.Create(chat).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *ChatModel) DeleteChat(chatID int) error {
+	if err := m.DB.Where("chat_id=?", chatID).Delete(&Chat{}).Error; err != nil {
 		return err
 	}
 

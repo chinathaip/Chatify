@@ -74,9 +74,29 @@ func TestCreateNewChat(t *testing.T) {
 	}
 
 	err := chatModel.CreateNewChat(newChat)
-
 	result, _ := chatModel.GetAllChat()
+
 	assert.NoError(t, err)
 	assert.Equal(t, len(expected), len(result))
 	assert.Equal(t, expected[2].Name, result[2].Name)
+}
+
+func TestDeleteChat(t *testing.T) {
+	db, dbConn := setup()
+	defer teardown(db, dbConn, clearChatDB)
+	chatModel := &ChatModel{DB: db}
+	seedChatDB(db)
+	chatID := 1
+	expected := []Chat{
+		{
+			ID:   2,
+			Name: "Test Chat Room 2",
+		},
+	}
+
+	err := chatModel.DeleteChat(chatID)
+	result, _ := chatModel.GetAllChat()
+
+	assert.NoError(t, err)
+	assert.Equal(t, len(expected), len(result))
 }
