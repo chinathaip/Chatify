@@ -47,7 +47,7 @@ func syncRoomSize(h *H, room string, expectedLength int, wg *sync.WaitGroup) {
 func TestInit(t *testing.T) {
 
 	t.Run("Register new client should create new room if not exists", func(t *testing.T) {
-		h := New()
+		h := New(nil, nil)
 		ctx, cancel := context.WithCancel(context.Background())
 		go h.Init(ctx)
 		defer cancel()
@@ -61,7 +61,7 @@ func TestInit(t *testing.T) {
 	})
 
 	t.Run("Register new client should add new user to the existing room", func(t *testing.T) {
-		h := New()
+		h := New(nil, nil)
 		ctx, cancel := context.WithCancel(context.Background())
 		go h.Init(ctx)
 		defer cancel()
@@ -76,7 +76,7 @@ func TestInit(t *testing.T) {
 	})
 
 	t.Run("Unregister should remove user from the existing room", func(t *testing.T) {
-		h := New()
+		h := New(nil, nil)
 		ctx, cancel := context.WithCancel(context.Background())
 		go h.Init(ctx)
 		defer cancel()
@@ -97,7 +97,7 @@ func TestInit(t *testing.T) {
 	})
 
 	t.Run("Room should be terminated when last user left", func(t *testing.T) {
-		h := New()
+		h := New(nil, nil)
 		ctx, cancel := context.WithCancel(context.Background())
 		go h.Init(ctx)
 		defer cancel()
@@ -112,7 +112,7 @@ func TestInit(t *testing.T) {
 	})
 
 	t.Run("Broadcast message only within the room", func(t *testing.T) {
-		h := New()
+		h := New(nil, nil)
 		ctx, cancel := context.WithCancel(context.Background())
 		go h.Init(ctx)
 		defer cancel()
@@ -151,7 +151,7 @@ func TestInit(t *testing.T) {
 
 func TestReadMsgFrom(t *testing.T) {
 	t.Run("Read message from client correctly", func(t *testing.T) {
-		h := New()
+		h := New(nil, nil)
 		ctx, cancel := context.WithCancel(context.Background())
 		go h.Init(ctx)
 		defer cancel()

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"log"
 	"time"
 
 	"gorm.io/gorm"
@@ -9,6 +10,7 @@ import (
 type ChatService interface {
 	GetAllChat() ([]Chat, error)
 	CreateNewChat(*Chat) error
+	IsChatExist(chatName string) (int, bool)
 }
 
 type ChatModel struct {
@@ -31,4 +33,20 @@ func (m *ChatModel) CreateNewChat(chat *Chat) error {
 	}
 
 	return nil
+}
+
+func (m *ChatModel) IsChatExist(chatName string) (int, bool) {
+	var chat Chat
+	if err := m.DB.Where("chat_name=?", chatName).First(&chat).Error; err != nil {
+		log.Println("Errpr getting chat exist : ", err)
+		return 0, false
+	}
+
+	log.Printf("Got Chat : %v\n", chat)
+
+	if chat.ID == 0 {
+		return 0, false
+	}
+
+	return chat.ID, true
 }

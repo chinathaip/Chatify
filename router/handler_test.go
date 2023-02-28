@@ -33,6 +33,10 @@ func (cs *mockChatService) CreateNewChat(*service.Chat) error {
 	return nil
 }
 
+func (cs *mockChatService) IsChatExist(chatName string) (int, bool) {
+	return 0, true
+}
+
 type mockMessageService struct {
 	isGetMessagesCalled     bool
 	isStoreNewMessageCalled bool
@@ -78,7 +82,7 @@ func TestGetAllChat(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetPath("/chats")
 		mockChatService := &mockChatService{}
-		handler := newHandler(mockChatService, nil)
+		handler := NewHandler(mockChatService, nil)
 
 		err := handler.handleGetAllChat(c)
 
@@ -131,7 +135,7 @@ func TestGetMessages(t *testing.T) {
 			c.SetParamNames("chat_id")
 			c.SetParamValues(test.paramValue)
 			mockMessageService := &mockMessageService{}
-			handler := newHandler(nil, mockMessageService)
+			handler := NewHandler(nil, mockMessageService)
 
 			handler.handleGetMessages(c)
 
@@ -179,7 +183,7 @@ func TestStoreMessage(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetPath("/messages")
 			mockMessageService := &mockMessageService{}
-			handler := newHandler(nil, mockMessageService)
+			handler := NewHandler(nil, mockMessageService)
 
 			handler.handleStoreMessage(c)
 

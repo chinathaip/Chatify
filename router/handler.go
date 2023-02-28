@@ -9,19 +9,19 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type handler struct {
+type Handler struct {
 	chatService    service.ChatService
 	messageService service.MessageService
 }
 
-func newHandler(chatService service.ChatService, messageService service.MessageService) *handler {
-	return &handler{
+func NewHandler(chatService service.ChatService, messageService service.MessageService) *Handler {
+	return &Handler{
 		chatService:    chatService,
 		messageService: messageService,
 	}
 }
 
-func (h *handler) handleGetAllChat(c echo.Context) error {
+func (h *Handler) handleGetAllChat(c echo.Context) error {
 	chat, err := h.chatService.GetAllChat()
 	if err != nil {
 		log.Println("Error retreiving chat: ", err)
@@ -31,7 +31,7 @@ func (h *handler) handleGetAllChat(c echo.Context) error {
 	return c.JSON(http.StatusOK, chat)
 }
 
-func (h *handler) handleCreateNewChat(c echo.Context) error {
+func (h *Handler) handleCreateNewChat(c echo.Context) error {
 	var chat service.Chat
 	err := c.Bind(&chat)
 	if err != nil || chat.Name == "" {
@@ -48,7 +48,7 @@ func (h *handler) handleCreateNewChat(c echo.Context) error {
 	return c.JSON(http.StatusCreated, chat)
 }
 
-func (h *handler) handleGetMessages(c echo.Context) error {
+func (h *Handler) handleGetMessages(c echo.Context) error {
 	id := c.Param("chat_id")
 	chatID, err := strconv.Atoi(id)
 	if err != nil || chatID == 0 {
@@ -62,7 +62,7 @@ func (h *handler) handleGetMessages(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]any{"chat_id": chatID, "messages": msg})
 }
 
-func (h *handler) handleStoreMessage(c echo.Context) error {
+func (h *Handler) handleStoreMessage(c echo.Context) error {
 	var msg service.Message
 	if err := c.Bind(&msg); err != nil {
 		log.Println("Erorr binding: ", err)

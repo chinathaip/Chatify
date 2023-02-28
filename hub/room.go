@@ -3,6 +3,7 @@ package hub
 import "sync"
 
 type Room struct {
+	id    int
 	name  string
 	users map[connection]bool
 	mutex sync.RWMutex

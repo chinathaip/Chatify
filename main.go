@@ -12,6 +12,7 @@ import (
 	"github.com/chinathaip/chatify/config"
 	"github.com/chinathaip/chatify/hub"
 	"github.com/chinathaip/chatify/router"
+	"github.com/chinathaip/chatify/service"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -19,15 +20,22 @@ import (
 func main() {
 	fmt.Println("---Hello Chatify---")
 	cfg := config.All()
-	ctx, cancel := context.WithCancel(context.Background())
-	h := hub.New()
-	go h.Init(ctx)
 
 	db, err := gorm.Open(postgres.Open(cfg.DBConnection), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Error connecting to db: %v", err.Error())
 	}
-	e := router.RegRoute(h, db)
+
+	msgService := &service.MessageModel{DB: db}
+	chatService := &service.ChatModel{DB: db}
+
+	hub := hub.New(chatService, msgService)
+	handler := router.NewHandler(chatService, msgService)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	go hub.Init(ctx)
+
+	e := router.RegRoute(hub, handler)
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
