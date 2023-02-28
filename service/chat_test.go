@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
@@ -24,9 +23,15 @@ func seedChatDB(db *gorm.DB) {
 	}
 }
 
+func clearChatDB(db *gorm.DB) {
+	if err := db.Delete(&Chat{}, "chat_id>=1").Error; err != nil {
+		log.Fatal(err)
+	}
+}
+
 func TestGetAllChat(t *testing.T) {
-	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
-	assert.NoError(t, err)
+	db, dbConn := setup()
+	defer teardown(db, dbConn, clearChatDB)
 	chatModel := &ChatModel{DB: db}
 	seedChatDB(db)
 	expected := []Chat{
@@ -45,4 +50,33 @@ func TestGetAllChat(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, expected[0].ID, chats[0].ID)
 	assert.Equal(t, expected[1].Name, chats[1].Name)
+}
+
+func TestCreateNewChat(t *testing.T) {
+	db, dbConn := setup()
+	defer teardown(db, dbConn, clearChatDB)
+	chatModel := &ChatModel{DB: db}
+	seedChatDB(db)
+	newChat := &Chat{Name: "Test Chat Room 3"}
+	expected := []Chat{
+		{
+			ID:   1,
+			Name: "Test Chat Room 1",
+		},
+		{
+			ID:   2,
+			Name: "Test Chat Room 2",
+		},
+		{
+			ID:   3,
+			Name: "Test Chat Room 3",
+		},
+	}
+
+	err := chatModel.CreateNewChat(newChat)
+
+	result, _ := chatModel.GetAllChat()
+	assert.NoError(t, err)
+	assert.Equal(t, len(expected), len(result))
+	assert.Equal(t, expected[2].Name, result[2].Name)
 }

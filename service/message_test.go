@@ -16,8 +16,8 @@ func setup() (*gorm.DB, *sql.DB) {
 	return db, dbConn
 }
 
-func teardown(db *gorm.DB, dbConn *sql.DB) {
-	clearDB(db)
+func teardown(db *gorm.DB, dbConn *sql.DB, clearTable func(db *gorm.DB)) {
+	clearTable(db)
 	dbConn.Close()
 }
 
@@ -35,15 +35,15 @@ func seedMessageDB(db *gorm.DB) {
 	}
 }
 
-func clearDB(db *gorm.DB) {
-	if err := db.Delete(&Message{}, "chat_id=1").Error; err != nil {
+func clearMessageDB(db *gorm.DB) {
+	if err := db.Delete(&Message{}, "chat_id>=1").Error; err != nil {
 		log.Fatal(err)
 	}
 }
 
 func TestGetMessageInChat(t *testing.T) {
 	db, dbConn := setup()
-	defer teardown(db, dbConn)
+	defer teardown(db, dbConn, clearMessageDB)
 	messageModel := &MessageModel{DB: db}
 	seedMessageDB(db)
 	expected := []Message{
@@ -69,7 +69,7 @@ func TestGetMessageInChat(t *testing.T) {
 
 func TestStoreNewMessage(t *testing.T) {
 	db, dbConn := setup()
-	defer teardown(db, dbConn)
+	defer teardown(db, dbConn, clearMessageDB)
 	messageModel := &MessageModel{DB: db}
 	seedMessageDB(db)
 	newMsg := &Message{SenderID: 1, ChatID: 1, Data: "Test Message 3"}
