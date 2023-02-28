@@ -48,7 +48,9 @@ func TestInit(t *testing.T) {
 
 	t.Run("Register new client should create new room if not exists", func(t *testing.T) {
 		h := New()
-		go h.Init(context.Background())
+		ctx, cancel := context.WithCancel(context.Background())
+		go h.Init(ctx)
+		defer cancel()
 		client := NewClient("Test room", &websocket.Conn{})
 
 		h.Register <- client
@@ -60,7 +62,9 @@ func TestInit(t *testing.T) {
 
 	t.Run("Register new client should add new user to the existing room", func(t *testing.T) {
 		h := New()
-		go h.Init(context.Background())
+		ctx, cancel := context.WithCancel(context.Background())
+		go h.Init(ctx)
+		defer cancel()
 		client2 := NewClient("Room1", &websocket.Conn{})
 		h.Rooms["Room1"] = NewRoom("Room1")
 
@@ -73,21 +77,20 @@ func TestInit(t *testing.T) {
 
 	t.Run("Unregister should remove user from the existing room", func(t *testing.T) {
 		h := New()
-		go h.Init(context.Background())
+		ctx, cancel := context.WithCancel(context.Background())
+		go h.Init(ctx)
+		defer cancel()
 		client1 := NewClient("Room1", &websocket.Conn{})
 		client2 := NewClient("Room1", &websocket.Conn{})
-		wg := &sync.WaitGroup{}
-		wg.Add(2)
-		h.Register <- client1 //client 1 join room 1
-		go syncRoomSize(h, "Room1", 1, wg)
-		h.Register <- client2 //client 2 join room 1
-		go syncRoomSize(h, "Room1", 2, wg)
-		wg.Wait() //wait for both register to finish
-		assert.Equal(t, 2, len(h.getRoom("Room1").users))
+		r := NewRoom("Room1")
+		r.setNewUser(client1.conn)
+		r.setNewUser(client2.conn)
+		h.setNewRoom(r.name, r)
 
+		wg := &sync.WaitGroup{}
 		wg.Add(1)
 		h.Unregister <- client1 //client 1 leave room 1
-		syncRoomSize(h, "Room1", 1, wg)
+		go syncRoomSize(h, "Room1", 1, wg)
 
 		wg.Wait()
 		assert.Equal(t, 1, len(h.getRoom("Room1").users))
@@ -95,79 +98,73 @@ func TestInit(t *testing.T) {
 
 	t.Run("Room should be terminated when last user left", func(t *testing.T) {
 		h := New()
-		go h.Init(context.Background())
+		ctx, cancel := context.WithCancel(context.Background())
+		go h.Init(ctx)
+		defer cancel()
 		client := NewClient("Room1", &websocket.Conn{})
-		wg := &sync.WaitGroup{}
-		wg.Add(1)
-		h.Register <- client
-		go syncRoomSize(h, "Room1", 1, wg)
-		wg.Wait()
-		assert.Equal(t, 1, len(h.getRoom("Room1").users))
+		r := NewRoom("Room1")
+		r.setNewUser(client.conn)
+		h.setNewRoom(r.name, r)
 
-		wg.Add(1)
 		h.Unregister <- client
-		go syncRoomSize(h, "Room1", 0, wg)
 
-		wg.Wait()
 		assert.Nil(t, h.getRoom("Room1"))
 	})
 
 	t.Run("Broadcast message only within the room", func(t *testing.T) {
 		h := New()
-		go h.Init(context.Background())
+		ctx, cancel := context.WithCancel(context.Background())
+		go h.Init(ctx)
+		defer cancel()
 		mockConnection1 := newMock()
 		mockConnection2 := newMock()
 		mockConnection3 := newMock()
-		client1 := NewClient("Room1", mockConnection1)
-		client2 := NewClient("Room1", mockConnection2)
-		client3 := NewClient("Room999", mockConnection3) //different room
-		wg := &sync.WaitGroup{}
-		wg.Add(3)
-		h.Register <- client1
-		go syncRoomSize(h, "Room1", 1, wg)
-		h.Register <- client2
-		go syncRoomSize(h, "Room1", 2, wg)
-		h.Register <- client3
-		go syncRoomSize(h, "Room999", 1, wg)
-		wg.Wait()
-		assert.Equal(t, 2, len(h.getRoom("Room1").users))
-		assert.Equal(t, 1, len(h.getRoom("Room999").users))
+		r1 := NewRoom("Room1")
+		r999 := NewRoom("Room999")
+		r1.setNewUser(mockConnection1)
+		r1.setNewUser(mockConnection2)
+		r999.setNewUser(mockConnection3) //third client is assigned to different room
+		h.setNewRoom(r1.name, r1)
+		h.setNewRoom(r999.name, r999)
 
+		wg := &sync.WaitGroup{}
 		wg.Add(1)
 		h.Broadcast <- &Message{"Room1", []byte("Hello!")} //message for user in room 1 only
 		go func() {
+			defer wg.Done()
 			for {
 				if mockConnection1.hasReceived && mockConnection2.hasReceived {
 					break
 				}
 			}
-			defer wg.Done()
 		}()
 
 		wg.Wait()
 		assert.True(t, mockConnection1.hasReceived)
 		assert.True(t, mockConnection2.hasReceived)
 		assert.False(t, mockConnection3.hasReceived) //client 3 should not receive the message
+		assert.Equal(t, 2, len(r1.users))
+		assert.Equal(t, 1, len(r999.users))
+		assert.Equal(t, 2, len(h.Rooms))
 	})
 }
 
 func TestReadMsgFrom(t *testing.T) {
 	t.Run("Read message from client correctly", func(t *testing.T) {
 		h := New()
-		go h.Init(context.Background())
+		ctx, cancel := context.WithCancel(context.Background())
+		go h.Init(ctx)
+		defer cancel()
 		mockConnection1 := newMock()
 		mockConnection2 := newMock()
 		client1 := NewClient("Room1", mockConnection1)
 		client2 := NewClient("Room1", mockConnection2)
-		wg := &sync.WaitGroup{}
-		wg.Add(2)
-		h.Register <- client1
+		r := NewRoom("Room1")
+		r.setNewUser(client1.conn)
+		r.setNewUser(client2.conn)
+		h.setNewRoom(r.name, r)
 		go h.ReadMsgFrom(client1)
-		go syncRoomSize(h, "Room1", 1, wg)
-		h.Register <- client2
-		go syncRoomSize(h, "Room1", 2, wg)
-		wg.Wait()
-		assert.Equal(t, 2, len(h.getRoom("Room1").users))
+		wg := &sync.WaitGroup{}
 
 		wg.Add(1)
 		err := client1.conn.WriteMessage(websocket.TextMessage, []byte("Hello World"))
@@ -175,7 +172,7 @@ func TestReadMsgFrom(t *testing.T) {
 		result := <-h.Broadcast
 		go func(data string) {
 			for {
-				if mockConnection1.hasSent && mockConnection2.hasReceived && data == "Hello World" {
+				if mockConnection1.hasSent && mockConnection2.hasReceived {
 					break
 				}
 			}
