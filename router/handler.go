@@ -11,20 +11,20 @@ import (
 	"gorm.io/gorm"
 )
 
-type Handler struct {
+type handler struct {
 	messageService service.MessageModel
 }
 
-func NewHandler(dsn string) *Handler {
+func newHandler(dsn string) *handler {
 	gorm, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalln("Error connecting to db: ", err)
 	}
-	return &Handler{
+	return &handler{
 		messageService: service.MessageModel{DB: gorm},
 	}
 }
-func (h *Handler) handleGetMessages(c echo.Context) error {
+func (h *handler) handleGetMessages(c echo.Context) error {
 	id := c.Param("chat_id")
 	chatID, err := strconv.Atoi(id)
 	if err != nil || chatID == 0 {
@@ -37,4 +37,18 @@ func (h *Handler) handleGetMessages(c echo.Context) error {
 		return echo.ErrNotFound
 	}
 	return c.JSON(http.StatusOK, map[string]any{"chat_id": chatID, "messages": msg})
+}
+
+func (h *handler) handleStoreMessage(c echo.Context) error {
+	var msg service.Message
+	if err := c.Bind(&msg); err != nil {
+		log.Println("Erorr binding: ", err)
+		return echo.ErrBadRequest
+	}
+
+	if err := h.messageService.StoreNewMessage(&msg); err != nil {
+		return echo.ErrInternalServerError
+	}
+
+	return c.JSON(http.StatusCreated, msg)
 }

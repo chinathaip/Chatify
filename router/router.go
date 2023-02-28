@@ -11,11 +11,13 @@ import (
 
 func RegRoute(h *hub.H, dbURL string) *echo.Echo {
 	e := echo.New()
-	handler := NewHandler(dbURL)
+	handler := newHandler(dbURL)
 
 	e.Use(middleware.Logger())
 	e.GET("/ws", handleSocket(h))
+
 	e.GET("/messages/:chat_id", handler.handleGetMessages)
+	e.POST("/messages", handler.handleStoreMessage)
 
 	return e
 }

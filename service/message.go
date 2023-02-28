@@ -1,6 +1,10 @@
 package service
 
-import "gorm.io/gorm"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type MessageModel struct {
 	DB *gorm.DB
@@ -12,7 +16,15 @@ func (m *MessageModel) GetMessagesInChat(chatID int) ([]Message, error) {
 	if result.Error != nil {
 		return nil, result.Error
 	}
+
 	return msg, nil
 }
 
-//TODO: StoreNewMessage (POST `/messages/:chat_id`)
+func (m *MessageModel) StoreNewMessage(msg *Message) error {
+	msg.SentAt = time.Now()
+	if err := m.DB.Create(msg).Where("chat_id=?", msg.ChatID).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
