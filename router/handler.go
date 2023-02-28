@@ -31,6 +31,23 @@ func (h *handler) handleGetAllChat(c echo.Context) error {
 	return c.JSON(http.StatusOK, chat)
 }
 
+func (h *handler) handleCreateNewChat(c echo.Context) error {
+	var chat service.Chat
+	err := c.Bind(&chat)
+	if err != nil || chat.Name == "" {
+		log.Println("Client has sent invalid request body")
+		return c.String(http.StatusBadRequest, "invalid param")
+	}
+
+	err = h.chatService.CreateNewChat(&chat)
+	if err != nil {
+		log.Println("Internal error :", err)
+		return echo.ErrInternalServerError
+	}
+
+	return c.JSON(http.StatusCreated, chat)
+}
+
 func (h *handler) handleGetMessages(c echo.Context) error {
 	id := c.Param("chat_id")
 	chatID, err := strconv.Atoi(id)
@@ -58,6 +75,7 @@ func (h *handler) handleStoreMessage(c echo.Context) error {
 	}
 
 	if err := h.messageService.StoreNewMessage(&msg); err != nil {
+		log.Println("Internal error :", err)
 		return echo.ErrInternalServerError
 	}
 
