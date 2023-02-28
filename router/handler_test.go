@@ -3,6 +3,7 @@ package router
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/chinathaip/chatify/service"
@@ -61,6 +62,7 @@ func (ms *mockMessageService) GetMessagesInChat(chatID int) ([]service.Message, 
 }
 
 func (ms *mockMessageService) StoreNewMessage(msg *service.Message) error {
+	ms.isStoreNewMessageCalled = true
 	return nil
 }
 
@@ -132,6 +134,53 @@ func TestGetMessages(t *testing.T) {
 			assert.Equal(t, test.expectedStatusCode, c.Response().Status)
 			assert.Equal(t, test.expectedServiceCalled, mockMessageService.isGetMessagesCalled)
 
+		})
+	}
+}
+
+func TestStoreMessage(t *testing.T) {
+
+	tests := []struct {
+		name                  string
+		msgJSON               string
+		expectedStatusCode    int
+		expectedServiceCalled bool
+	}{
+		{
+			name: "Should return 201 Created when valid request body",
+			msgJSON: `{
+				"sender_id": 1,
+				"chat_id": 1,
+				"data": "This message was created by API"
+			}`,
+			expectedStatusCode:    http.StatusCreated,
+			expectedServiceCalled: true,
+		},
+		{
+			name: "Should return 400 Bad Request when invalid request body",
+			msgJSON: `{
+				"ayoyoyoyo" : 1
+			}`,
+			expectedStatusCode:    http.StatusBadRequest,
+			expectedServiceCalled: false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(test.msgJSON))
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			c.SetPath("/messages")
+			mockMessageService := &mockMessageService{}
+			handler := newHandler(nil, mockMessageService)
+
+			handler.handleStoreMessage(c)
+
+			assert.Equal(t, test.expectedStatusCode, c.Response().Status)
+			assert.Equal(t, test.expectedServiceCalled, mockMessageService.isStoreNewMessageCalled)
 		})
 	}
 }

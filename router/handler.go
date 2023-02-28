@@ -49,7 +49,12 @@ func (h *handler) handleStoreMessage(c echo.Context) error {
 	var msg service.Message
 	if err := c.Bind(&msg); err != nil {
 		log.Println("Erorr binding: ", err)
-		return echo.ErrBadRequest
+		return c.String(http.StatusBadRequest, "error!")
+	}
+
+	if msg.SenderID == 0 || msg.ChatID == 0 || msg.Data == "" {
+		log.Println("Client has sent invalid request body")
+		return c.String(http.StatusBadRequest, "invalid request body")
 	}
 
 	if err := h.messageService.StoreNewMessage(&msg); err != nil {
