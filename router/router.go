@@ -4,14 +4,16 @@ import (
 	"net/http"
 
 	"github.com/chinathaip/chatify/hub"
+	"github.com/chinathaip/chatify/service"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"gorm.io/gorm"
 )
 
-func RegRoute(h *hub.H, dbURL string) *echo.Echo {
+func RegRoute(h *hub.H, db *gorm.DB) *echo.Echo {
 	e := echo.New()
-	handler := newHandler(dbURL)
+	handler := newHandler(&service.ChatModel{DB: db}, db)
 
 	e.Use(middleware.Logger())
 	e.GET("/ws", handleSocket(h))

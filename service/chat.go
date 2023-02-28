@@ -4,6 +4,10 @@ import (
 	"gorm.io/gorm"
 )
 
+type ChatService interface {
+	GetAllChat() ([]Chat, error)
+}
+
 type ChatModel struct {
 	DB *gorm.DB
 }

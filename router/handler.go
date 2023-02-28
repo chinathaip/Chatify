@@ -7,23 +7,18 @@ import (
 
 	"github.com/chinathaip/chatify/service"
 	"github.com/labstack/echo/v4"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 type handler struct {
-	chatservice    service.ChatModel
+	chatservice    service.ChatService
 	messageService service.MessageModel
 }
 
-func newHandler(dsn string) *handler {
-	gorm, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		log.Fatalln("Error connecting to db: ", err)
-	}
+func newHandler(chatService service.ChatService, db *gorm.DB) *handler {
 	return &handler{
-		chatservice:    service.ChatModel{DB: gorm},
-		messageService: service.MessageModel{DB: gorm},
+		chatservice:    chatService,
+		messageService: service.MessageModel{DB: db},
 	}
 }
 
