@@ -7,23 +7,22 @@ import (
 
 	"github.com/chinathaip/chatify/service"
 	"github.com/labstack/echo/v4"
-	"gorm.io/gorm"
 )
 
 type handler struct {
-	chatservice    service.ChatService
-	messageService service.MessageModel
+	chatService    service.ChatService
+	messageService service.MessageService
 }
 
-func newHandler(chatService service.ChatService, db *gorm.DB) *handler {
+func newHandler(chatService service.ChatService, messageService service.MessageService) *handler {
 	return &handler{
-		chatservice:    chatService,
-		messageService: service.MessageModel{DB: db},
+		chatService:    chatService,
+		messageService: messageService,
 	}
 }
 
 func (h *handler) handleGetAllChat(c echo.Context) error {
-	chat, err := h.chatservice.GetAllChat()
+	chat, err := h.chatService.GetAllChat()
 	if err != nil {
 		log.Println("Error retreiving chat: ", err)
 		return echo.ErrInternalServerError
@@ -36,13 +35,12 @@ func (h *handler) handleGetMessages(c echo.Context) error {
 	id := c.Param("chat_id")
 	chatID, err := strconv.Atoi(id)
 	if err != nil || chatID == 0 {
-		return echo.NewHTTPError(http.StatusBadRequest)
+		return c.String(http.StatusBadRequest, "invalid param")
 	}
-
 	msg, err := h.messageService.GetMessagesInChat(chatID)
 	if len(msg) == 0 {
 		log.Println("Error getting messages: ", err) //never show SQL error to client
-		return echo.ErrNotFound
+		return c.String(http.StatusNotFound, "not found")
 	}
 	return c.JSON(http.StatusOK, map[string]any{"chat_id": chatID, "messages": msg})
 }

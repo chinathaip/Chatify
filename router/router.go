@@ -13,7 +13,7 @@ import (
 
 func RegRoute(h *hub.H, db *gorm.DB) *echo.Echo {
 	e := echo.New()
-	handler := newHandler(&service.ChatModel{DB: db}, db)
+	handler := newHandler(&service.ChatModel{DB: db}, &service.MessageModel{DB: db})
 
 	e.Use(middleware.Logger())
 	e.GET("/ws", handleSocket(h))

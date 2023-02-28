@@ -6,6 +6,11 @@ import (
 	"gorm.io/gorm"
 )
 
+type MessageService interface {
+	GetMessagesInChat(int) ([]Message, error)
+	StoreNewMessage(*Message) error
+}
+
 type MessageModel struct {
 	DB *gorm.DB
 }
