@@ -16,6 +16,7 @@ func RegRoute(h *hub.H, dbURL string) *echo.Echo {
 	e.Use(middleware.Logger())
 	e.GET("/ws", handleSocket(h))
 
+	e.GET("/chats", handler.handleGetAllChat)
 	e.GET("/messages/:chat_id", handler.handleGetMessages)
 	e.POST("/messages", handler.handleStoreMessage)
 

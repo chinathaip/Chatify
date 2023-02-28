@@ -12,6 +12,7 @@ import (
 )
 
 type handler struct {
+	chatservice    service.ChatModel
 	messageService service.MessageModel
 }
 
@@ -21,9 +22,21 @@ func newHandler(dsn string) *handler {
 		log.Fatalln("Error connecting to db: ", err)
 	}
 	return &handler{
+		chatservice:    service.ChatModel{DB: gorm},
 		messageService: service.MessageModel{DB: gorm},
 	}
 }
+
+func (h *handler) handleGetAllChat(c echo.Context) error {
+	chat, err := h.chatservice.GetAllChat()
+	if err != nil {
+		log.Println("Error retreiving chat: ", err)
+		return echo.ErrInternalServerError
+	}
+
+	return c.JSON(http.StatusOK, chat)
+}
+
 func (h *handler) handleGetMessages(c echo.Context) error {
 	id := c.Param("chat_id")
 	chatID, err := strconv.Atoi(id)

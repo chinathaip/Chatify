@@ -5,9 +5,9 @@ import (
 )
 
 type Chat struct {
-	ID        int       `gorm:"column:chat_id"`
-	Name      int       `gorm:"column:chat_name"`
-	CreatedAt time.Time `gorm:"column:created_at"`
+	ID        int       `gorm:"column:chat_id" json:"id"`
+	Name      string    `gorm:"column:chat_name" json:"chat_name"`
+	CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
 }
 
 type Message struct {
