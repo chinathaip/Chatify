@@ -24,5 +24,5 @@ func NewClient(roomName string, conn connection) *Client {
 
 type Message struct {
 	roomName string
-	data     []byte
+	data     *JSONMessage
 }

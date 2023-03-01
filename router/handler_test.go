@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/chinathaip/chatify/service"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
@@ -58,13 +59,13 @@ func (ms *mockMessageService) GetMessagesInChat(chatID int) ([]service.Message, 
 		return []service.Message{
 			{
 				ID:       1,
-				SenderID: "1",
+				SenderID: uuid.UUID{},
 				ChatID:   1,
 				Data:     "Message 1",
 			},
 			{
 				ID:       2,
-				SenderID: "1",
+				SenderID: uuid.UUID{},
 				ChatID:   1,
 				Data:     "Message 2 from the same dude",
 			},
@@ -161,7 +162,7 @@ func TestStoreMessage(t *testing.T) {
 		{
 			name: "Should return 201 Created when valid request body",
 			msgJSON: `{
-				"sender_id": "1",
+				"sender_id": "27326c5b-7395-435b-bfc3-330ad6686e53",
 				"chat_id": 1,
 				"data": "This message was created by API"
 			}`,

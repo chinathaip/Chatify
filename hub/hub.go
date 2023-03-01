@@ -2,10 +2,12 @@ package hub
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"sync"
 
 	"github.com/chinathaip/chatify/service"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
@@ -92,9 +94,10 @@ run:
 					if !active {
 						return
 					}
-					err := user.WriteMessage(websocket.TextMessage, message.data) //send the message
+					//send the message
+					err := user.WriteMessage(websocket.TextMessage, []byte(message.data.Text)) //<- causing the test to fail --> it sends "Hello World "
 					if err != nil {
-						log.Panicf("Error broadcasting message from %s", user.RemoteAddr())
+						log.Printf("Error broadcasting message from %s", user.RemoteAddr())
 					}
 					log.Printf("Broadcasting to : %s with message %s", user.RemoteAddr(), message.data)
 
@@ -104,10 +107,15 @@ run:
 				if h.msgService == nil {
 					continue
 				}
-				msg := &service.Message{SenderID: "1", ChatID: room.id, Data: string(message.data)}
-				err := h.msgService.StoreNewMessage(msg)
+
+				senderID, err := uuid.Parse(message.data.SenderID)
 				if err != nil {
-					log.Panicln("Error storing messages: ", err)
+					log.Println("Error parsing to uuid: ", err)
+				}
+				msg := &service.Message{SenderID: senderID, ChatID: room.id, Data: message.data.Text}
+				err = h.msgService.StoreNewMessage(msg)
+				if err != nil {
+					log.Println("Error storing messages: ", err)
 				}
 			}
 
@@ -127,8 +135,22 @@ func (h *H) ReadMsgFrom(client *Client) {
 				break
 			}
 		}
-		message := &Message{roomName: client.roomName, data: data}
-		log.Printf("Client: %s sent : %s\n", client.conn.RemoteAddr(), string(message.data))
+
+		if len(data) == 0 {
+			continue
+		}
+
+		log.Println("Here is before it is unmarshalled: ", string(data))
+
+		var jsonMsg JSONMessage
+		err = json.Unmarshal(data, &jsonMsg)
+		if err != nil {
+			log.Printf("Error unmarshalling jsonMSG: %v\n", err)
+			break
+		}
+
+		message := &Message{roomName: client.roomName, data: &jsonMsg}
+		log.Printf("Client: %s sent : %v\n", client.conn.RemoteAddr(), jsonMsg)
 
 		h.Broadcast <- message //send for broadcasting
 	}

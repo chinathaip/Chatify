@@ -3,11 +3,11 @@ module github.com/chinathaip/chatify
 go 1.19
 
 require (
+	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.10.0
 	github.com/stretchr/testify v1.8.1
-	golang.org/x/exp v0.0.0-20230224173230-c95f2b4c22f2
 	gorm.io/driver/postgres v1.4.8
 	gorm.io/driver/sqlite v1.4.4
 	gorm.io/gorm v1.24.5

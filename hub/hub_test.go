@@ -2,6 +2,8 @@ package hub
 
 import (
 	"context"
+	"encoding/json"
+	"log"
 	"net"
 	"sync"
 	"testing"
@@ -129,7 +131,7 @@ func TestInit(t *testing.T) {
 
 		wg := &sync.WaitGroup{}
 		wg.Add(1)
-		h.Broadcast <- &Message{"Room1", []byte("Hello!")} //message for user in room 1 only
+		h.Broadcast <- &Message{"Room1", &JSONMessage{SenderID: "27326c5b-7395-435b-bfc3-330ad6686e53", Text: "Hello"}} //message for user in room 1 only
 		go func() {
 			defer wg.Done()
 			for {
@@ -165,22 +167,26 @@ func TestReadMsgFrom(t *testing.T) {
 		h.setNewRoom(r.name, r)
 		go h.ReadMsgFrom(client1)
 		wg := &sync.WaitGroup{}
+		msg := &JSONMessage{Type: "message", SenderID: "27326c5b-7395-435b-bfc3-330ad6686e53", Text: "Hello World"}
+		data, err := json.Marshal(*msg)
+		assert.NoError(t, err)
+		log.Println("Here is the marshalled Data: ", data)
 
 		wg.Add(1)
-		err := client1.conn.WriteMessage(websocket.TextMessage, []byte("Hello World"))
+		err = client1.conn.WriteMessage(websocket.TextMessage, data)
 		assert.NoError(t, err)
 		result := <-h.Broadcast
-		go func(data string) {
+		go func() {
 			for {
 				if mockConnection1.hasSent && mockConnection2.hasReceived {
 					break
 				}
 			}
 			defer wg.Done()
-		}(string(result.data))
+		}()
 
 		wg.Wait()
-		assert.Equal(t, "Hello World", string(result.data))
+		assert.Equal(t, "Hello World", result.data.Text)
 		assert.True(t, mockConnection1.hasSent)
 		assert.True(t, mockConnection2.hasReceived)
 	})

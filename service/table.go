@@ -2,6 +2,8 @@ package service
 
 import (
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Chat struct {
@@ -12,7 +14,7 @@ type Chat struct {
 
 type Message struct {
 	ID       int       `gorm:"column:message_id" json:"id"`
-	SenderID string    `gorm:"column:sender_id" json:"sender_id"`
+	SenderID uuid.UUID `gorm:"column:sender_id" json:"sender_id"`
 	ChatID   int       `gorm:"column:chat_id" json:"chat_id"` //not sent to client
 	Data     string    `gorm:"column:data" json:"data"`
 	SentAt   time.Time `gorm:"column:sent_at" json:"sent_at"`
