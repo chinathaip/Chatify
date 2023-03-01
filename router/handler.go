@@ -5,9 +5,12 @@ import (
 	"net/http"
 	"strconv"
 
+	er "github.com/chinathaip/chatify/error"
 	"github.com/chinathaip/chatify/service"
 	"github.com/labstack/echo/v4"
 )
+
+var handErr = er.HandlerError{}
 
 type Handler struct {
 	chatService    service.ChatService
@@ -24,7 +27,7 @@ func NewHandler(chatService service.ChatService, messageService service.MessageS
 func (h *Handler) handleGetAllChat(c echo.Context) error {
 	chat, err := h.chatService.GetAllChat()
 	if err != nil {
-		log.Println("Error retreiving chat: ", err)
+		handErr.Log(err)
 		return echo.ErrInternalServerError
 	}
 
@@ -35,13 +38,13 @@ func (h *Handler) handleCreateNewChat(c echo.Context) error {
 	var chat service.Chat
 	err := c.Bind(&chat)
 	if err != nil || chat.Name == "" {
-		log.Println("Client has sent invalid request body")
+		handErr.Log(err)
 		return c.String(http.StatusBadRequest, "invalid param")
 	}
 
 	err = h.chatService.CreateNewChat(&chat)
 	if err != nil {
-		log.Println("Internal error :", err)
+		handErr.Log(err)
 		return echo.ErrInternalServerError
 	}
 
@@ -52,13 +55,14 @@ func (h *Handler) handleDeleteChat(c echo.Context) error {
 	param := c.QueryParam("chat_id")
 	id, err := strconv.Atoi(param)
 	if err != nil || id == 0 {
+		handErr.Log(err)
 		log.Println("Client has sent invalid request body")
 		return c.String(http.StatusBadRequest, "invalid param")
 	}
 
 	err = h.chatService.DeleteChat(id)
 	if err != nil {
-		log.Println("Internal error :", err)
+		handErr.Log(err)
 		return c.String(http.StatusInternalServerError, "something wrong on our end")
 	}
 
@@ -72,8 +76,11 @@ func (h *Handler) handleGetMessages(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "invalid param")
 	}
 	msg, err := h.messageService.GetMessagesInChat(chatID)
+	if err != nil {
+		handErr.Log(err)
+	}
+
 	if len(msg) == 0 {
-		log.Println("Error getting messages: ", err) //never show SQL error to client
 		return c.String(http.StatusNotFound, "not found")
 	}
 	return c.JSON(http.StatusOK, map[string]any{"chat_id": chatID, "messages": msg})
@@ -82,7 +89,7 @@ func (h *Handler) handleGetMessages(c echo.Context) error {
 func (h *Handler) handleStoreMessage(c echo.Context) error {
 	var msg service.Message
 	if err := c.Bind(&msg); err != nil {
-		log.Println("Erorr binding: ", err)
+		handErr.Log(err)
 		return c.String(http.StatusBadRequest, "error!")
 	}
 
@@ -92,7 +99,7 @@ func (h *Handler) handleStoreMessage(c echo.Context) error {
 	}
 
 	if err := h.messageService.StoreNewMessage(&msg); err != nil {
-		log.Println("Internal error :", err)
+		handErr.Log(err)
 		return echo.ErrInternalServerError
 	}
 

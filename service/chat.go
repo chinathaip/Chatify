@@ -4,8 +4,11 @@ import (
 	"log"
 	"time"
 
+	er "github.com/chinathaip/chatify/error"
 	"gorm.io/gorm"
 )
+
+var chatErr = er.ChatError{}
 
 type ChatService interface {
 	GetAllChat() ([]Chat, error)
@@ -47,7 +50,7 @@ func (m *ChatModel) DeleteChat(chatID int) error {
 func (m *ChatModel) IsChatExist(chatName string) (int, bool) {
 	var chat Chat
 	if err := m.DB.Where("chat_name=?", chatName).First(&chat).Error; err != nil {
-		log.Println("Errpr getting chat exist : ", err)
+		chatErr.Log(err)
 		return 0, false
 	}
 

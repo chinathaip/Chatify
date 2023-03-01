@@ -6,10 +6,13 @@ import (
 	"log"
 	"sync"
 
+	"github.com/chinathaip/chatify/error"
 	"github.com/chinathaip/chatify/service"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
+
+var herr = error.HubError{}
 
 type H struct {
 	Broadcast   chan *Message
@@ -74,7 +77,7 @@ run:
 			chat := &service.Chat{Name: client.roomName}
 			err := h.chatService.CreateNewChat(chat)
 			if err != nil {
-				log.Panicln("Error creating new chat: ", err)
+				herr.Log(err)
 			}
 			room.id = chat.ID
 
@@ -97,13 +100,13 @@ run:
 
 					data, err := json.Marshal(message.data)
 					if err != nil {
-						log.Println("Error marshalling: ", err)
+						herr.Log(err)
 					}
 
 					//send the message
 					err = user.WriteMessage(websocket.TextMessage, data)
 					if err != nil {
-						log.Printf("Error broadcasting message from %s", user.RemoteAddr())
+						herr.Log(err)
 					}
 					log.Printf("Broadcasting to : %s with message %s", user.RemoteAddr(), message.data)
 				}
@@ -115,12 +118,12 @@ run:
 
 				senderID, err := uuid.Parse(message.data.SenderID)
 				if err != nil {
-					log.Println("Error parsing to uuid: ", err)
+					herr.Log(err)
 				}
 				msg := &service.Message{SenderID: senderID, ChatID: room.id, Data: message.data.Text}
 				err = h.msgService.StoreNewMessage(msg)
 				if err != nil {
-					log.Println("Error storing messages: ", err)
+					herr.Log(err)
 				}
 			}
 
@@ -145,13 +148,11 @@ func (h *H) ReadMsgFrom(client *Client) {
 			continue
 		}
 
-		log.Println("Here is before it is unmarshalled: ", string(data))
-
 		var jsonMsg JSONMessage
 		err = json.Unmarshal(data, &jsonMsg)
 		if err != nil {
 			log.Printf("Error unmarshalling jsonMSG: %v\n", err)
-			break
+			continue
 		}
 
 		message := &Message{roomName: client.roomName, data: &jsonMsg}
