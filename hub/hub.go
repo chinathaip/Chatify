@@ -94,13 +94,18 @@ run:
 					if !active {
 						return
 					}
+
+					data, err := json.Marshal(message.data)
+					if err != nil {
+						log.Println("Error marshalling: ", err)
+					}
+
 					//send the message
-					err := user.WriteMessage(websocket.TextMessage, []byte(message.data.Text)) //<- causing the test to fail --> it sends "Hello World "
+					err = user.WriteMessage(websocket.TextMessage, data)
 					if err != nil {
 						log.Printf("Error broadcasting message from %s", user.RemoteAddr())
 					}
 					log.Printf("Broadcasting to : %s with message %s", user.RemoteAddr(), message.data)
-
 				}
 
 				//store in db
