@@ -58,13 +58,13 @@ func (ms *mockMessageService) GetMessagesInChat(chatID int) ([]service.Message, 
 		return []service.Message{
 			{
 				ID:       1,
-				SenderID: 1,
+				SenderID: "1",
 				ChatID:   1,
 				Data:     "Message 1",
 			},
 			{
 				ID:       2,
-				SenderID: 1,
+				SenderID: "1",
 				ChatID:   1,
 				Data:     "Message 2 from the same dude",
 			},
@@ -161,7 +161,7 @@ func TestStoreMessage(t *testing.T) {
 		{
 			name: "Should return 201 Created when valid request body",
 			msgJSON: `{
-				"sender_id": 1,
+				"sender_id": "1",
 				"chat_id": 1,
 				"data": "This message was created by API"
 			}`,

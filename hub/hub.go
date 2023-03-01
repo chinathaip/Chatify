@@ -104,7 +104,7 @@ run:
 				if h.msgService == nil {
 					continue
 				}
-				msg := &service.Message{SenderID: 1, ChatID: room.id, Data: string(message.data)}
+				msg := &service.Message{SenderID: "1", ChatID: room.id, Data: string(message.data)}
 				err := h.msgService.StoreNewMessage(msg)
 				if err != nil {
 					log.Panicln("Error storing messages: ", err)

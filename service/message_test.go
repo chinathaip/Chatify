@@ -23,8 +23,8 @@ func teardown(db *gorm.DB, dbConn *sql.DB, clearTable func(db *gorm.DB)) {
 
 func seedMessageDB(db *gorm.DB) {
 	db.AutoMigrate(&Message{})
-	msg1 := Message{SenderID: 1, ChatID: 1, Data: "Test Message 1"}
-	msg2 := Message{SenderID: 1, ChatID: 1, Data: "Test Message 2"}
+	msg1 := Message{SenderID: "1", ChatID: 1, Data: "Test Message 1"}
+	msg2 := Message{SenderID: "1", ChatID: 1, Data: "Test Message 2"}
 
 	if err := db.Create(&msg1).Error; err != nil {
 		log.Fatalln("cannot seed msg 1", err)
@@ -49,13 +49,13 @@ func TestGetMessageInChat(t *testing.T) {
 	expected := []Message{
 		{
 			ID:       1,
-			SenderID: 1,
+			SenderID: "1",
 			ChatID:   1,
 			Data:     "Test Message 1",
 		},
 		{
 			ID:       2,
-			SenderID: 1,
+			SenderID: "1",
 			ChatID:   1,
 			Data:     "Test Message 2",
 		},
@@ -72,23 +72,23 @@ func TestStoreNewMessage(t *testing.T) {
 	defer teardown(db, dbConn, clearMessageDB)
 	messageModel := &MessageModel{DB: db}
 	seedMessageDB(db)
-	newMsg := &Message{SenderID: 1, ChatID: 1, Data: "Test Message 3"}
+	newMsg := &Message{SenderID: "1", ChatID: 1, Data: "Test Message 3"}
 	expected := []Message{
 		{
 			ID:       1,
-			SenderID: 1,
+			SenderID: "1",
 			ChatID:   1,
 			Data:     "Test Message 1",
 		},
 		{
 			ID:       2,
-			SenderID: 1,
+			SenderID: "1",
 			ChatID:   1,
 			Data:     "Test Message 2",
 		},
 		{
 			ID:       3,
-			SenderID: 1,
+			SenderID: "1",
 			ChatID:   1,
 			Data:     "Test Message 3",
 		},

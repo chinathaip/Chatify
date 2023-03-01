@@ -17,7 +17,7 @@ type MessageModel struct {
 
 func (m *MessageModel) GetMessagesInChat(chatID int) ([]Message, error) {
 	var msg []Message
-	result := m.DB.Where("chat_id=?", chatID).Find(&msg)
+	result := m.DB.Where("chat_id=?", chatID).Order("message_id ASC").Find(&msg)
 	if result.Error != nil {
 		return nil, result.Error
 	}
