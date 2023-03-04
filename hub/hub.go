@@ -8,7 +8,6 @@ import (
 
 	"github.com/chinathaip/chatify/error"
 	"github.com/chinathaip/chatify/service"
-	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
@@ -116,12 +115,8 @@ run:
 					continue
 				}
 
-				senderID, err := uuid.Parse(message.data.SenderID)
-				if err != nil {
-					herr.Log(err)
-				}
-				msg := &service.Message{SenderID: senderID, ChatID: room.id, Data: message.data.Text}
-				err = h.msgService.StoreNewMessage(msg)
+				msg := &service.Message{Sender: service.User{ID: message.data.Sender.ID}, ChatID: room.id, Data: message.data.Text}
+				err := h.msgService.StoreNewMessage(msg)
 				if err != nil {
 					herr.Log(err)
 				}

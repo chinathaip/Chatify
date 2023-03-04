@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/chinathaip/chatify/service"
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
@@ -58,16 +57,14 @@ func (ms *mockMessageService) GetMessagesInChat(chatID int) ([]service.Message, 
 	if chatID == 1 {
 		return []service.Message{
 			{
-				ID:       1,
-				SenderID: uuid.UUID{},
-				ChatID:   1,
-				Data:     "Message 1",
+				ID:     1,
+				ChatID: 1,
+				Data:   "Message 1",
 			},
 			{
-				ID:       2,
-				SenderID: uuid.UUID{},
-				ChatID:   1,
-				Data:     "Message 2 from the same dude",
+				ID:     2,
+				ChatID: 1,
+				Data:   "Message 2 from the same dude",
 			},
 		}, nil
 	}

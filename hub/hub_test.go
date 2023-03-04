@@ -8,6 +8,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/chinathaip/chatify/service"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 )
@@ -131,7 +132,7 @@ func TestInit(t *testing.T) {
 
 		wg := &sync.WaitGroup{}
 		wg.Add(1)
-		h.Broadcast <- &Message{"Room1", &JSONMessage{SenderID: "27326c5b-7395-435b-bfc3-330ad6686e53", Text: "Hello"}} //message for user in room 1 only
+		h.Broadcast <- &Message{"Room1", &JSONMessage{Sender: service.User{}, Text: "Hello"}} //message for user in room 1 only
 		go func() {
 			defer wg.Done()
 			for {
@@ -167,7 +168,7 @@ func TestReadMsgFrom(t *testing.T) {
 		h.setNewRoom(r.name, r)
 		go h.ReadMsgFrom(client1)
 		wg := &sync.WaitGroup{}
-		msg := &JSONMessage{Type: "message", SenderID: "27326c5b-7395-435b-bfc3-330ad6686e53", Text: "Hello World"}
+		msg := &JSONMessage{Type: "message", Sender: service.User{}, Text: "Hello World"}
 		data, err := json.Marshal(*msg)
 		assert.NoError(t, err)
 		log.Println("Here is the marshalled Data: ", data)

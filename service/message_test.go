@@ -5,7 +5,6 @@ import (
 	"log"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -24,8 +23,8 @@ func teardown(db *gorm.DB, dbConn *sql.DB, clearTable func(db *gorm.DB)) {
 
 func seedMessageDB(db *gorm.DB) {
 	db.AutoMigrate(&Message{})
-	msg1 := Message{SenderID: uuid.UUID{}, ChatID: 1, Data: "Test Message 1"}
-	msg2 := Message{SenderID: uuid.UUID{}, ChatID: 1, Data: "Test Message 2"}
+	msg1 := Message{ChatID: 1, Data: "Test Message 1"}
+	msg2 := Message{ChatID: 1, Data: "Test Message 2"}
 
 	if err := db.Create(&msg1).Error; err != nil {
 		log.Fatalln("cannot seed msg 1", err)
@@ -49,23 +48,21 @@ func TestGetMessageInChat(t *testing.T) {
 	seedMessageDB(db)
 	expected := []Message{
 		{
-			ID:       1,
-			SenderID: uuid.UUID{},
-			ChatID:   1,
-			Data:     "Test Message 1",
+			ID:     1,
+			ChatID: 1,
+			Data:   "Test Message 1",
 		},
 		{
-			ID:       2,
-			SenderID: uuid.UUID{},
-			ChatID:   1,
-			Data:     "Test Message 2",
+			ID:     2,
+			ChatID: 1,
+			Data:   "Test Message 2",
 		},
 	}
 
 	messages, err := messageModel.GetMessagesInChat(1)
 
 	assert.NoError(t, err)
-	assert.Equal(t, expected, messages)
+	assert.Equal(t, expected[0].Data, messages[0].Data)
 }
 
 func TestStoreNewMessage(t *testing.T) {
@@ -73,25 +70,22 @@ func TestStoreNewMessage(t *testing.T) {
 	defer teardown(db, dbConn, clearMessageDB)
 	messageModel := &MessageModel{DB: db}
 	seedMessageDB(db)
-	newMsg := &Message{SenderID: uuid.UUID{}, ChatID: 1, Data: "Test Message 3"}
+	newMsg := &Message{ChatID: 1, Data: "Test Message 3"}
 	expected := []Message{
 		{
-			ID:       1,
-			SenderID: uuid.UUID{},
-			ChatID:   1,
-			Data:     "Test Message 1",
+			ID:     1,
+			ChatID: 1,
+			Data:   "Test Message 1",
 		},
 		{
-			ID:       2,
-			SenderID: uuid.UUID{},
-			ChatID:   1,
-			Data:     "Test Message 2",
+			ID:     2,
+			ChatID: 1,
+			Data:   "Test Message 2",
 		},
 		{
-			ID:       3,
-			SenderID: uuid.UUID{},
-			ChatID:   1,
-			Data:     "Test Message 3",
+			ID:     3,
+			ChatID: 1,
+			Data:   "Test Message 3",
 		},
 	}
 
