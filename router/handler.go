@@ -7,6 +7,7 @@ import (
 
 	er "github.com/chinathaip/chatify/error"
 	"github.com/chinathaip/chatify/service"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -15,12 +16,14 @@ var handErr = er.HandlerError{}
 type Handler struct {
 	chatService    service.ChatService
 	messageService service.MessageService
+	userService    service.UserService
 }
 
-func NewHandler(chatService service.ChatService, messageService service.MessageService) *Handler {
+func NewHandler(chatService service.ChatService, messageService service.MessageService, userService service.UserService) *Handler {
 	return &Handler{
 		chatService:    chatService,
 		messageService: messageService,
+		userService:    userService,
 	}
 }
 
@@ -104,4 +107,24 @@ func (h *Handler) handleStoreMessage(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, msg)
+}
+
+func (h *Handler) handleCreateNewUser(c echo.Context) error {
+	var user service.User
+	if err := c.Bind(&user); err != nil {
+		handErr.Log(err)
+		return c.String(http.StatusBadRequest, "error!")
+	}
+
+	if user.ID == uuid.Nil || user.Username == "" {
+		log.Println("Client has sent invalid request body")
+		return c.String(http.StatusBadRequest, "invalid request body")
+	}
+
+	if err := h.userService.CreateNewUser(user); err != nil {
+		handErr.Log(err)
+		return echo.ErrInternalServerError
+	}
+
+	return c.JSON(http.StatusCreated, user)
 }

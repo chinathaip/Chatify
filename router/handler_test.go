@@ -84,7 +84,7 @@ func TestGetAllChat(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetPath("/chats")
 		mockChatService := &mockChatService{}
-		handler := NewHandler(mockChatService, nil)
+		handler := NewHandler(mockChatService, nil, nil)
 
 		err := handler.handleGetAllChat(c)
 
@@ -137,7 +137,7 @@ func TestGetMessages(t *testing.T) {
 			c.SetParamNames("chat_id")
 			c.SetParamValues(test.paramValue)
 			mockMessageService := &mockMessageService{}
-			handler := NewHandler(nil, mockMessageService)
+			handler := NewHandler(nil, mockMessageService, nil)
 
 			handler.handleGetMessages(c)
 
@@ -185,7 +185,7 @@ func TestStoreMessage(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetPath("/messages")
 			mockMessageService := &mockMessageService{}
-			handler := NewHandler(nil, mockMessageService)
+			handler := NewHandler(nil, mockMessageService, nil)
 
 			handler.handleStoreMessage(c)
 

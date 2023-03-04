@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/chinathaip/chatify/service"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 )
@@ -50,7 +51,7 @@ func syncRoomSize(h *H, room string, expectedLength int, wg *sync.WaitGroup) {
 func TestInit(t *testing.T) {
 
 	t.Run("Register new client should create new room if not exists", func(t *testing.T) {
-		h := New(nil, nil)
+		h := New(nil, nil, nil)
 		ctx, cancel := context.WithCancel(context.Background())
 		go h.Init(ctx)
 		defer cancel()
@@ -64,7 +65,7 @@ func TestInit(t *testing.T) {
 	})
 
 	t.Run("Register new client should add new user to the existing room", func(t *testing.T) {
-		h := New(nil, nil)
+		h := New(nil, nil, nil)
 		ctx, cancel := context.WithCancel(context.Background())
 		go h.Init(ctx)
 		defer cancel()
@@ -79,7 +80,7 @@ func TestInit(t *testing.T) {
 	})
 
 	t.Run("Unregister should remove user from the existing room", func(t *testing.T) {
-		h := New(nil, nil)
+		h := New(nil, nil, nil)
 		ctx, cancel := context.WithCancel(context.Background())
 		go h.Init(ctx)
 		defer cancel()
@@ -100,7 +101,7 @@ func TestInit(t *testing.T) {
 	})
 
 	t.Run("Room should be terminated when last user left", func(t *testing.T) {
-		h := New(nil, nil)
+		h := New(nil, nil, nil)
 		ctx, cancel := context.WithCancel(context.Background())
 		go h.Init(ctx)
 		defer cancel()
@@ -115,7 +116,7 @@ func TestInit(t *testing.T) {
 	})
 
 	t.Run("Broadcast message only within the room", func(t *testing.T) {
-		h := New(nil, nil)
+		h := New(nil, nil, nil)
 		ctx, cancel := context.WithCancel(context.Background())
 		go h.Init(ctx)
 		defer cancel()
@@ -154,7 +155,7 @@ func TestInit(t *testing.T) {
 
 func TestReadMsgFrom(t *testing.T) {
 	t.Run("Read message from client correctly", func(t *testing.T) {
-		h := New(nil, nil)
+		h := New(nil, nil, nil)
 		ctx, cancel := context.WithCancel(context.Background())
 		go h.Init(ctx)
 		defer cancel()
@@ -168,7 +169,9 @@ func TestReadMsgFrom(t *testing.T) {
 		h.setNewRoom(r.name, r)
 		go h.ReadMsgFrom(client1)
 		wg := &sync.WaitGroup{}
-		msg := &JSONMessage{Type: "message", Sender: service.User{}, Text: "Hello World"}
+
+		id, _ := uuid.Parse("dapdkadakpk")
+		msg := &JSONMessage{Type: "message", Sender: service.User{ID: id, Username: "Khing"}, Text: "Hello World"}
 		data, err := json.Marshal(*msg)
 		assert.NoError(t, err)
 		log.Println("Here is the marshalled Data: ", data)

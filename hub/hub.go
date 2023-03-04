@@ -21,9 +21,10 @@ type H struct {
 	mutex       sync.RWMutex
 	msgService  service.MessageService
 	chatService service.ChatService
+	userService service.UserService
 }
 
-func New(chatService service.ChatService, msgService service.MessageService) *H {
+func New(chatService service.ChatService, msgService service.MessageService, userService service.UserService) *H {
 	return &H{
 		Broadcast:   make(chan *Message),
 		Register:    make(chan *Client),
@@ -32,6 +33,7 @@ func New(chatService service.ChatService, msgService service.MessageService) *H 
 		mutex:       sync.RWMutex{},
 		msgService:  msgService,
 		chatService: chatService,
+		userService: userService,
 	}
 }
 
@@ -148,6 +150,15 @@ func (h *H) ReadMsgFrom(client *Client) {
 		if err != nil {
 			log.Printf("Error unmarshalling jsonMSG: %v\n", err)
 			continue
+		}
+
+		if h.userService != nil {
+			username, err := h.userService.GetUserNameByID(jsonMsg.Sender.ID)
+			if err != nil {
+				herr.Log(err)
+				continue
+			}
+			jsonMsg.Sender.Username = username
 		}
 
 		message := &Message{roomName: client.roomName, data: &jsonMsg}

@@ -25,6 +25,7 @@ func RegRoute(h *hub.H, handler *Handler) *echo.Echo {
 	e.DELETE("/chats", handler.handleDeleteChat)
 	e.GET("/messages/:chat_id", handler.handleGetMessages)
 	e.POST("/messages", handler.handleStoreMessage)
+	e.POST("/chats", handler.handleCreateNewUser)
 
 	return e
 }
