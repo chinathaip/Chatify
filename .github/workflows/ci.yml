@@ -7,41 +7,40 @@ on:
     branches: [ "main" ]
 
 jobs:
-
-  build:
+  # ==============
+  # CI task
+  # ==============
+  build-and-push-docker-image:
+    name: Build Docker image and push to repositories
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
+
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+      
+      - name: Setup SHA
+        run: echo "GITHUB_SHA=${GITHUB_SHA}" >> $GITHUB_ENV
+      
+      - name: Build the Docker image
+        run: docker build . --file Dockerfile --tag ghcr.io/chinathaip/chatify:${{ env.GITHUB_SHA }}
 
-    - name: Set up Go
-      uses: actions/setup-go@v3
-      with:
-        go-version: 1.19
-
-    - name: Build
-      run: go build -v ./...
-
-    - name: Test
-      run: go test -v ./...
-
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag ghcr.io/chinathaip/chatify:${{ env.GITHUB_SHA }}
-
-    - name: Login ghcr.io
-        uses: docker/login-action@v2.1.0
+      - name: Login ghcr.io
+        uses: docker/login-action@v1.8.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.WORKFLOW_TOKEN }}
+          password: ${{ secrets.GITHUB_TOKEN }}
           logout: true
+      
+      - name: Push to GitHub Container Registry
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          tags: |
+            ghcr.io/chinathaip/chatify:${{ env.GITHUB_SHA }}
+          push: ${{ github.ref == 'refs/heads/main' }}
 
-    - name: Push to GitHub Container Registry
-      uses: docker/build-push-action@v3.2.0
-      with:
-        context: .
-        tags: |
-          ghcr.io/chinathaip/chatify:${{ env.GITHUB_SHA }}
-        push: true
+      - name: Image digest
+        run: echo ${{ steps.docker_build.outputs.digest }}
 
-    - name: Image digest
-      run: echo ${{ steps.docker_build.outputs.digest }}
