@@ -25,7 +25,7 @@ func All() Config {
 }
 
 func loadEnv() {
-	err := godotenv.Load("config/.env")
+	err := godotenv.Load()
 	if err != nil {
 		fmt.Println("Error loading .env file")
 	}
