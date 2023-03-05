@@ -6,75 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/chinathaip/chatify/service"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
-
-type mockChatService struct {
-	isGetAllCalled bool
-}
-
-func (cs *mockChatService) GetAllChat() ([]service.Chat, error) {
-	cs.isGetAllCalled = true
-	return []service.Chat{
-		{
-			ID:   1,
-			Name: "Test Chat Room",
-		},
-		{
-			ID:   2,
-			Name: "Test Chat Room 2",
-		},
-	}, nil
-}
-
-func (cs *mockChatService) DeleteChat(chatID int) error {
-	return nil
-}
-
-func (cs *mockChatService) CreateNewChat(*service.Chat) error {
-	return nil
-}
-
-func (cs *mockChatService) IsChatExist(chatName string) (int, bool) {
-	return 0, true
-}
-
-type mockMessageService struct {
-	isGetMessagesCalled     bool
-	isStoreNewMessageCalled bool
-}
-
-type mockError struct{}
-
-func (e *mockError) Error() string {
-	return "Error occured!"
-}
-
-func (ms *mockMessageService) GetMessagesInChat(chatID int) ([]service.Message, error) {
-	ms.isGetMessagesCalled = true
-	if chatID == 1 {
-		return []service.Message{
-			{
-				ID:     1,
-				ChatID: 1,
-				Data:   "Message 1",
-			},
-			{
-				ID:     2,
-				ChatID: 1,
-				Data:   "Message 2 from the same dude",
-			},
-		}, nil
-	}
-	return []service.Message{}, &mockError{}
-}
-
-func (ms *mockMessageService) StoreNewMessage(msg *service.Message) error {
-	ms.isStoreNewMessageCalled = true
-	return nil
-}
 
 func TestGetAllChat(t *testing.T) {
 	t.Run("Should Return 200 Ok if no error", func(t *testing.T) {
@@ -191,6 +125,53 @@ func TestStoreMessage(t *testing.T) {
 
 			assert.Equal(t, test.expectedStatusCode, c.Response().Status)
 			assert.Equal(t, test.expectedServiceCalled, mockMessageService.isStoreNewMessageCalled)
+		})
+	}
+}
+
+func TestCreateNewUser(t *testing.T) {
+	tests := []struct {
+		name                 string
+		userJSON             string
+		expectedStatusCode   int
+		expectdServiceCalled bool
+	}{
+		{
+			name: "Should return 201 Created when valid request body",
+			userJSON: `{
+				"id":"27326c5b-7395-435b-bfc3-330ad6686e53",
+				"username": "Kidcat"
+			}`,
+			expectedStatusCode:   http.StatusCreated,
+			expectdServiceCalled: true,
+		},
+		{
+
+			name: "Should return 404 Bad Request when invalid request body",
+			userJSON: `{
+				"heeeHAA: 1"
+				"username": "Kidcat"
+			}`,
+			expectedStatusCode:   http.StatusBadRequest,
+			expectdServiceCalled: false,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(test.userJSON))
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			c.SetPath("/chats")
+			mockUserService := &mockUserService{}
+			handler := NewHandler(nil, nil, mockUserService)
+
+			handler.handleCreateNewUser(c)
+
+			assert.Equal(t, test.expectedStatusCode, c.Response().Status)
+			assert.Equal(t, test.expectdServiceCalled, mockUserService.isCreateNewUserCalled)
+
 		})
 	}
 }
