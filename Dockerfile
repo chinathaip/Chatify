@@ -13,9 +13,6 @@ RUN go mod download
 # Copy the rest of the application code to the container's working directory
 COPY . .
 
-# Copy the .env file to the container's working directory
-COPY .env .
-
 # Build the Go application and output the binary to /app/out/go-app
 RUN go build -o ./out/go-app .
 
@@ -27,9 +24,6 @@ FROM alpine:3.16.2
 # Copy the binary built in the previous stage from build-base to the /app/go-app on the new container
 # copy line 17 to the /app/go-app
 COPY --from=build-base /app/out/go-app /app/go-app
-
-# Copy the .env file to the container's working directory
-COPY .env .
 
 # Run the go application when the container starts
 CMD ["/app/go-app"]

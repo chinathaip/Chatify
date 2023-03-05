@@ -21,6 +21,14 @@ jobs:
       
       - name: Setup SHA
         run: echo "GITHUB_SHA=${GITHUB_SHA}" >> $GITHUB_ENV
+
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+      
+      - name: Run Tests
+        run: go test -v ./...
       
       - name: Build the Docker image
         run: docker build . --file Dockerfile --tag ghcr.io/chinathaip/chatify:${{ env.GITHUB_SHA }}
