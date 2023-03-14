@@ -13,17 +13,7 @@ type ParticipantModel struct {
 }
 
 func (m *ParticipantModel) AddAsParticipant(p *ChatParticipants) error {
-
-	//check if already exist
-	existing := ChatParticipants{}
-	if err := m.DB.Where(&ChatParticipants{ChatID: p.ChatID, UserID: p.UserID}).First(&existing).Error; err != nil {
-		if err != gorm.ErrRecordNotFound {
-			return err
-		}
-	}
-
-	//if already exist, do nothing
-	if existing.ID != 0 || existing.ChatID != 0 {
+	if yes := m.isExist(p); yes {
 		return nil
 	}
 
@@ -31,5 +21,31 @@ func (m *ParticipantModel) AddAsParticipant(p *ChatParticipants) error {
 	if err := m.DB.Create(p).Error; err != nil {
 		return err
 	}
+
 	return nil
+}
+
+func (m *ParticipantModel) GetAllParticipants() ([]ChatParticipants, error) {
+	var cp []ChatParticipants
+	if err := m.DB.Find(&cp).Error; err != nil {
+		return nil, err
+	}
+
+	return cp, nil
+}
+
+func (m *ParticipantModel) isExist(p *ChatParticipants) bool {
+	existing := ChatParticipants{}
+	if err := m.DB.Where(&ChatParticipants{ChatID: p.ChatID, UserID: p.UserID}).First(&existing).Error; err != nil {
+		if err != gorm.ErrRecordNotFound {
+			return true
+		}
+	}
+
+	//if already exist, do nothing
+	if existing.ID != 0 || existing.ChatID != 0 {
+		return true
+	}
+
+	return false
 }
