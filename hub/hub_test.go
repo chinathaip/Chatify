@@ -51,11 +51,11 @@ func syncRoomSize(h *H, room string, expectedLength int, wg *sync.WaitGroup) {
 func TestInit(t *testing.T) {
 
 	t.Run("Register new client should create new room if not exists", func(t *testing.T) {
-		h := New(nil, nil, nil)
+		h := New(nil, nil, nil, nil)
 		ctx, cancel := context.WithCancel(context.Background())
 		go h.Init(ctx)
 		defer cancel()
-		client := NewClient("Test room", &websocket.Conn{})
+		client := NewClient("Test room", uuid.UUID{}, &websocket.Conn{})
 
 		h.Register <- client
 		_, found := h.Rooms["Test room"]
@@ -65,11 +65,11 @@ func TestInit(t *testing.T) {
 	})
 
 	t.Run("Register new client should add new user to the existing room", func(t *testing.T) {
-		h := New(nil, nil, nil)
+		h := New(nil, nil, nil, nil)
 		ctx, cancel := context.WithCancel(context.Background())
 		go h.Init(ctx)
 		defer cancel()
-		client2 := NewClient("Room1", &websocket.Conn{})
+		client2 := NewClient("Room1", uuid.UUID{}, &websocket.Conn{})
 		h.Rooms["Room1"] = NewRoom("Room1")
 
 		h.Register <- client2
@@ -80,12 +80,12 @@ func TestInit(t *testing.T) {
 	})
 
 	t.Run("Unregister should remove user from the existing room", func(t *testing.T) {
-		h := New(nil, nil, nil)
+		h := New(nil, nil, nil, nil)
 		ctx, cancel := context.WithCancel(context.Background())
 		go h.Init(ctx)
 		defer cancel()
-		client1 := NewClient("Room1", &websocket.Conn{})
-		client2 := NewClient("Room1", &websocket.Conn{})
+		client1 := NewClient("Room1", uuid.UUID{}, &websocket.Conn{})
+		client2 := NewClient("Room1", uuid.UUID{}, &websocket.Conn{})
 		r := NewRoom("Room1")
 		r.setNewUser(client1.conn)
 		r.setNewUser(client2.conn)
@@ -101,11 +101,11 @@ func TestInit(t *testing.T) {
 	})
 
 	t.Run("Room should be terminated when last user left", func(t *testing.T) {
-		h := New(nil, nil, nil)
+		h := New(nil, nil, nil, nil)
 		ctx, cancel := context.WithCancel(context.Background())
 		go h.Init(ctx)
 		defer cancel()
-		client := NewClient("Room1", &websocket.Conn{})
+		client := NewClient("Room1", uuid.UUID{}, &websocket.Conn{})
 		r := NewRoom("Room1")
 		r.setNewUser(client.conn)
 		h.setNewRoom(r.name, r)
@@ -116,7 +116,7 @@ func TestInit(t *testing.T) {
 	})
 
 	t.Run("Broadcast message only within the room", func(t *testing.T) {
-		h := New(nil, nil, nil)
+		h := New(nil, nil, nil, nil)
 		ctx, cancel := context.WithCancel(context.Background())
 		go h.Init(ctx)
 		defer cancel()
@@ -155,14 +155,14 @@ func TestInit(t *testing.T) {
 
 func TestReadMsgFrom(t *testing.T) {
 	t.Run("Read message from client correctly", func(t *testing.T) {
-		h := New(nil, nil, nil)
+		h := New(nil, nil, nil, nil)
 		ctx, cancel := context.WithCancel(context.Background())
 		go h.Init(ctx)
 		defer cancel()
 		mockConnection1 := newMock()
 		mockConnection2 := newMock()
-		client1 := NewClient("Room1", mockConnection1)
-		client2 := NewClient("Room1", mockConnection2)
+		client1 := NewClient("Room1", uuid.UUID{}, mockConnection1)
+		client2 := NewClient("Room1", uuid.UUID{}, mockConnection2)
 		r := NewRoom("Room1")
 		r.setNewUser(client1.conn)
 		r.setNewUser(client2.conn)

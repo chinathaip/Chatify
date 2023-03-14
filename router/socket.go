@@ -1,9 +1,11 @@
 package router
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/chinathaip/chatify/hub"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 )
@@ -23,13 +25,20 @@ func handleSocket(h *hub.H) echo.HandlerFunc {
 			roomName = "Test Chat Room"
 		}
 
+		userID := c.QueryParam("userID")
+		uuid, err := uuid.Parse(userID)
+		if err != nil {
+			return errors.New("invalid UUID")
+		}
+
+		//upgrade connection to web socket
 		conn, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 		if err != nil {
 			return err
 		}
 		defer conn.Close()
 
-		client := hub.NewClient(roomName, conn)
+		client := hub.NewClient(roomName, uuid, conn)
 
 		h.Register <- client
 		h.ReadMsgFrom(client) //read message from client

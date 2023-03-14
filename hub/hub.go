@@ -14,26 +14,34 @@ import (
 var herr = error.HubError{}
 
 type H struct {
-	Broadcast   chan *Message
-	Register    chan *Client
-	Unregister  chan *Client
-	Rooms       map[string]*Room
-	mutex       sync.RWMutex
-	msgService  service.MessageService
-	chatService service.ChatService
-	userService service.UserService
+	Broadcast  chan *Message
+	Register   chan *Client
+	Unregister chan *Client
+
+	mutex sync.RWMutex
+	Rooms map[string]*Room
+
+	msgService         service.MessageService
+	chatService        service.ChatService
+	userService        service.UserService
+	participantService service.ParticipantService
 }
 
-func New(chatService service.ChatService, msgService service.MessageService, userService service.UserService) *H {
+func New(
+	chatService service.ChatService,
+	msgService service.MessageService,
+	userService service.UserService,
+	participantService service.ParticipantService) *H {
 	return &H{
-		Broadcast:   make(chan *Message),
-		Register:    make(chan *Client),
-		Unregister:  make(chan *Client),
-		Rooms:       make(map[string]*Room),
-		mutex:       sync.RWMutex{},
-		msgService:  msgService,
-		chatService: chatService,
-		userService: userService,
+		Broadcast:          make(chan *Message),
+		Register:           make(chan *Client),
+		Unregister:         make(chan *Client),
+		Rooms:              make(map[string]*Room),
+		mutex:              sync.RWMutex{},
+		msgService:         msgService,
+		chatService:        chatService,
+		userService:        userService,
+		participantService: participantService,
 	}
 }
 
@@ -67,20 +75,28 @@ run:
 			room.setNewUser(client.conn)
 			h.setNewRoom(client.roomName, room)
 
-			//store in db
 			if h.chatService == nil {
 				continue
 			}
+
+			//create new chat in db if not exist
 			if id, exist := h.chatService.IsChatExist(client.roomName); exist {
 				room.id = id
+			} else {
+				chat := &service.Chat{Name: client.roomName}
+				if err := h.chatService.CreateNewChat(chat); err != nil {
+					herr.Log(err)
+					continue
+				}
+				room.id = chat.ID
+			}
+
+			//add permission to view messages
+			participant := &service.ChatParticipants{ChatID: room.id, UserID: client.userID}
+			if err := h.participantService.AddAsParticipant(participant); err != nil {
+				herr.Log(err)
 				continue
 			}
-			chat := &service.Chat{Name: client.roomName}
-			err := h.chatService.CreateNewChat(chat)
-			if err != nil {
-				herr.Log(err)
-			}
-			room.id = chat.ID
 
 		case client := <-h.Unregister:
 			room := h.getRoom(client.roomName)

@@ -29,8 +29,9 @@ func main() {
 	msgService := &service.MessageModel{DB: db}
 	chatService := &service.ChatModel{DB: db}
 	userService := &service.UserModel{DB: db}
+	participantService := &service.ParticipantModel{DB: db}
 
-	hub := hub.New(chatService, msgService, userService)
+	hub := hub.New(chatService, msgService, userService, participantService)
 	handler := router.NewHandler(chatService, msgService, userService)
 
 	ctx, cancel := context.WithCancel(context.Background())

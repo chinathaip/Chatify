@@ -12,6 +12,12 @@ type Chat struct {
 	CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
 }
 
+type ChatParticipants struct {
+	ID     int       `gorm:"column:chat_participant_id" json:"id"`
+	ChatID int       `gorm:"foriegnKey:chat_id:" json:"chat_id"`
+	UserID uuid.UUID `gorm:"foreignKey:user_id" json:"user_id"`
+}
+
 type Message struct {
 	ID        int       `gorm:"column:message_id" json:"id"`
 	Sender    User      `gorm:"foreignKey:sender_id" json:"sender"`
