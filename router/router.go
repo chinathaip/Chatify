@@ -23,7 +23,7 @@ func RegRoute(h *hub.H, handler *Handler) *echo.Echo {
 	e.GET("/chats", handler.handleGetAllChat)
 	e.POST("/chats", handler.handleCreateNewChat)
 	e.DELETE("/chats", handler.handleDeleteChat)
-	e.GET("/messages/:chat_id", handler.handleGetMessages, validateJWT)
+	e.GET("/messages/:chat_id", handler.handleGetMessages, handler.validateJWT)
 	e.POST("/messages", handler.handleStoreMessage)
 	e.POST("/users", handler.handleCreateNewUser)
 
