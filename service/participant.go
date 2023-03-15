@@ -6,6 +6,7 @@ import (
 
 type ParticipantService interface {
 	AddAsParticipant(*ChatParticipants) error
+	Exist(*ChatParticipants) bool
 }
 
 type ParticipantModel struct {
@@ -13,7 +14,7 @@ type ParticipantModel struct {
 }
 
 func (m *ParticipantModel) AddAsParticipant(p *ChatParticipants) error {
-	if yes := m.isExist(p); yes {
+	if yes := m.Exist(p); yes {
 		return nil
 	}
 
@@ -34,7 +35,7 @@ func (m *ParticipantModel) GetAllParticipants() ([]ChatParticipants, error) {
 	return cp, nil
 }
 
-func (m *ParticipantModel) isExist(p *ChatParticipants) bool {
+func (m *ParticipantModel) Exist(p *ChatParticipants) bool {
 	existing := ChatParticipants{}
 	if err := m.DB.Where(&ChatParticipants{ChatID: p.ChatID, UserID: p.UserID}).First(&existing).Error; err != nil {
 		if err != gorm.ErrRecordNotFound {

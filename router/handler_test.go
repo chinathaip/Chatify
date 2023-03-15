@@ -18,7 +18,7 @@ func TestGetAllChat(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetPath("/chats")
 		mockChatService := &mockChatService{}
-		handler := NewHandler(mockChatService, nil, nil)
+		handler := NewHandler(mockChatService, nil, nil, nil)
 
 		err := handler.handleGetAllChat(c)
 
@@ -71,7 +71,7 @@ func TestGetMessages(t *testing.T) {
 			c.SetParamNames("chat_id")
 			c.SetParamValues(test.paramValue)
 			mockMessageService := &mockMessageService{}
-			handler := NewHandler(nil, mockMessageService, nil)
+			handler := NewHandler(nil, mockMessageService, nil, nil)
 
 			handler.handleGetMessages(c)
 
@@ -119,7 +119,7 @@ func TestStoreMessage(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetPath("/messages")
 			mockMessageService := &mockMessageService{}
-			handler := NewHandler(nil, mockMessageService, nil)
+			handler := NewHandler(nil, mockMessageService, nil, nil)
 
 			handler.handleStoreMessage(c)
 
@@ -165,7 +165,7 @@ func TestCreateNewUser(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetPath("/chats")
 			mockUserService := &mockUserService{}
-			handler := NewHandler(nil, nil, mockUserService)
+			handler := NewHandler(nil, nil, mockUserService, nil)
 
 			handler.handleCreateNewUser(c)
 

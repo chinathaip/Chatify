@@ -14,16 +14,22 @@ import (
 var handErr = er.HandlerError{}
 
 type Handler struct {
-	chatService    service.ChatService
-	messageService service.MessageService
-	userService    service.UserService
+	chatService        service.ChatService
+	messageService     service.MessageService
+	userService        service.UserService
+	participantService service.ParticipantService
 }
 
-func NewHandler(chatService service.ChatService, messageService service.MessageService, userService service.UserService) *Handler {
+func NewHandler(
+	chatService service.ChatService,
+	messageService service.MessageService,
+	userService service.UserService,
+	participantService service.ParticipantService) *Handler {
 	return &Handler{
-		chatService:    chatService,
-		messageService: messageService,
-		userService:    userService,
+		chatService:        chatService,
+		messageService:     messageService,
+		userService:        userService,
+		participantService: participantService,
 	}
 }
 
