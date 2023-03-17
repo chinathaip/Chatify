@@ -4,11 +4,9 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"time"
 
 	er "github.com/chinathaip/chatify/error"
 	"github.com/chinathaip/chatify/service"
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
@@ -16,16 +14,22 @@ import (
 var handErr = er.HandlerError{}
 
 type Handler struct {
-	chatService    service.ChatService
-	messageService service.MessageService
-	userService    service.UserService
+	chatService        service.ChatService
+	messageService     service.MessageService
+	userService        service.UserService
+	participantService service.ParticipantService
 }
 
-func NewHandler(chatService service.ChatService, messageService service.MessageService, userService service.UserService) *Handler {
+func NewHandler(
+	chatService service.ChatService,
+	messageService service.MessageService,
+	userService service.UserService,
+	participantService service.ParticipantService) *Handler {
 	return &Handler{
-		chatService:    chatService,
-		messageService: messageService,
-		userService:    userService,
+		chatService:        chatService,
+		messageService:     messageService,
+		userService:        userService,
+		participantService: participantService,
 	}
 }
 
@@ -52,26 +56,6 @@ func (h *Handler) handleCreateNewChat(c echo.Context) error {
 		handErr.Log(err)
 		return echo.ErrInternalServerError
 	}
-
-	claims := &jwtClaims{
-		chat.ID,
-		jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 1)),
-		}}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	if err != nil {
-		handErr.Log(err)
-		return echo.ErrInternalServerError
-
-	}
-	t, err := token.SignedString([]byte("secret"))
-	if err != nil {
-		handErr.Log(err)
-		return echo.ErrBadGateway
-	}
-
-	log.Println("Token: ", t)
 
 	return c.JSON(http.StatusCreated, chat)
 }

@@ -32,7 +32,7 @@ func main() {
 	participantService := &service.ParticipantModel{DB: db}
 
 	hub := hub.New(chatService, msgService, userService, participantService)
-	handler := router.NewHandler(chatService, msgService, userService)
+	handler := router.NewHandler(chatService, msgService, userService, participantService)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go hub.Init(ctx)
