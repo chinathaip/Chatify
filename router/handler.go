@@ -84,7 +84,10 @@ func (h *Handler) handleGetMessages(c echo.Context) error {
 	if err != nil || chatID == 0 {
 		return c.String(http.StatusBadRequest, "invalid param")
 	}
-	msg, err := h.messageService.GetMessagesInChat(chatID)
+
+	pageNumber, pageSize := handlePagination(c)
+
+	msg, err := h.messageService.GetMessagesInChat(chatID, pageNumber, pageSize)
 	if err != nil {
 		handErr.Log(err)
 	}
@@ -92,7 +95,7 @@ func (h *Handler) handleGetMessages(c echo.Context) error {
 	if len(msg) == 0 {
 		return c.String(http.StatusNotFound, "not found")
 	}
-	return c.JSON(http.StatusOK, map[string]any{"chat_id": chatID, "messages": msg})
+	return c.JSON(http.StatusOK, map[string]any{"pageNumber: ": pageNumber, "pageSize": pageSize, "chat_id": chatID, "messages": msg})
 }
 
 func (h *Handler) handleStoreMessage(c echo.Context) error {
@@ -133,4 +136,20 @@ func (h *Handler) handleCreateNewUser(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, user)
+}
+
+func handlePagination(c echo.Context) (int, int) {
+	pnum := c.QueryParam("pageNumber")
+	pageNumber, err := strconv.Atoi(pnum)
+	if err != nil || pageNumber == 0 {
+		pageNumber = 1
+	}
+
+	psize := c.QueryParam("pageSize")
+	pageSize, err := strconv.Atoi(psize)
+	if err != nil || pageSize == 0 {
+		pageSize = 10
+	}
+
+	return pageNumber, pageSize
 }

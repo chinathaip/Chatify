@@ -10,6 +10,11 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	pageSize   = 10
+	pageNumber = 1
+)
+
 func setup() (*gorm.DB, *sql.DB) {
 	db, _ := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
 	dbConn, _ := db.DB()
@@ -59,7 +64,7 @@ func TestGetMessageInChat(t *testing.T) {
 		},
 	}
 
-	messages, err := messageModel.GetMessagesInChat(1)
+	messages, err := messageModel.GetMessagesInChat(1, pageNumber, pageSize)
 
 	assert.NoError(t, err)
 	assert.Equal(t, expected[0].Data, messages[0].Data)
@@ -91,7 +96,7 @@ func TestStoreNewMessage(t *testing.T) {
 
 	err := messageModel.StoreNewMessage(newMsg)
 
-	result, _ := messageModel.GetMessagesInChat(1)
+	result, _ := messageModel.GetMessagesInChat(1, pageNumber, pageSize)
 	assert.NoError(t, err)
 	assert.Equal(t, len(expected), len(result))
 	assert.Equal(t, expected[2].Data, result[2].Data)

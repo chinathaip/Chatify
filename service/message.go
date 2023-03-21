@@ -7,7 +7,7 @@ import (
 )
 
 type MessageService interface {
-	GetMessagesInChat(int) ([]Message, error)
+	GetMessagesInChat(int, int, int) ([]Message, error)
 	StoreNewMessage(*Message) error
 }
 
@@ -15,9 +15,10 @@ type MessageModel struct {
 	DB *gorm.DB
 }
 
-func (m *MessageModel) GetMessagesInChat(chatID int) ([]Message, error) {
+func (m *MessageModel) GetMessagesInChat(chatID, pageNumber, pageSize int) ([]Message, error) {
 	var messages []Message
-	err := m.DB.Preload("Sender").Where("chat_id = ?", chatID).Order("message_id ASC").Find(&messages).Error
+	offset := (pageNumber - 1) * pageSize //skip the first n(pageSize) message, and start on the next one
+	err := m.DB.Preload("Sender").Where("chat_id = ?", chatID).Offset(offset).Limit(pageSize).Order("message_id DESC").Find(&messages).Error
 	if err != nil {
 		return nil, err
 	}

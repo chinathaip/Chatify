@@ -46,7 +46,7 @@ func (e *mockError) Error() string {
 	return "Error occured!"
 }
 
-func (ms *mockMessageService) GetMessagesInChat(chatID int) ([]service.Message, error) {
+func (ms *mockMessageService) GetMessagesInChat(chatID, pageNumber, pageSize int) ([]service.Message, error) {
 	ms.isGetMessagesCalled = true
 	if chatID == 1 {
 		return []service.Message{
