@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	pageSize   = 10
-	pageNumber = 1
+	defaultPageSize   = 10
+	defaultPageNumber = 1
 )
 
 func setup() (*gorm.DB, *sql.DB) {
@@ -53,21 +53,77 @@ func TestGetMessageInChat(t *testing.T) {
 	seedMessageDB(db)
 	expected := []Message{
 		{
-			ID:     1,
-			ChatID: 1,
-			Data:   "Test Message 1",
-		},
-		{
 			ID:     2,
 			ChatID: 1,
 			Data:   "Test Message 2",
 		},
+		{
+			ID:     1,
+			ChatID: 1,
+			Data:   "Test Message 1",
+		},
 	}
 
-	messages, err := messageModel.GetMessagesInChat(1, pageNumber, pageSize)
+	messages, err := messageModel.GetMessagesInChat(1, defaultPageNumber, defaultPageSize)
 
 	assert.NoError(t, err)
 	assert.Equal(t, expected[0].Data, messages[0].Data)
+}
+
+func TestPaginationQuery(t *testing.T) {
+	tests := []struct {
+		name       string
+		pageNumber int
+		pageSize   int
+		expected   []Message
+	}{
+		{
+			name:       "return only one message when pageSize is 1",
+			pageNumber: 1,
+			pageSize:   1,
+			expected:   []Message{{ID: 2, ChatID: 1, Data: "Test Message 2"}},
+		},
+		{
+			name:       "return two message when pageSize is 2",
+			pageNumber: 1,
+			pageSize:   2,
+			expected:   []Message{{ID: 2, ChatID: 1, Data: "Test Message 2"}, {ID: 1, ChatID: 1, Data: "Test Message 1"}},
+		},
+		{
+			name:       "return only item in the specified page number -1",
+			pageNumber: 1,
+			pageSize:   1,
+			expected:   []Message{{ID: 2, ChatID: 1, Data: "Test Message 2"}},
+		},
+		{
+			name:       "return only item in the specified page number -2",
+			pageNumber: 2,
+			pageSize:   1,
+			expected:   []Message{{ID: 1, ChatID: 1, Data: "Test Message 1"}},
+		},
+		{
+			name:       "return empty list when no data exist in the specified page number",
+			pageNumber: 3,
+			pageSize:   1,
+			expected:   []Message{},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			db, dbConn := setup()
+			defer teardown(db, dbConn, clearMessageDB)
+			messageModel := &MessageModel{DB: db}
+			seedMessageDB(db)
+
+			msg, err := messageModel.GetMessagesInChat(1, test.pageNumber, test.pageSize)
+
+			assert.NoError(t, err)
+			if assert.Equal(t, len(test.expected), len(msg)) && len(test.expected) != 0 {
+				assert.Equal(t, test.expected[0].Data, msg[0].Data)
+			}
+		})
+	}
 }
 
 func TestStoreNewMessage(t *testing.T) {
@@ -78,9 +134,9 @@ func TestStoreNewMessage(t *testing.T) {
 	newMsg := &Message{ChatID: 1, Data: "Test Message 3"}
 	expected := []Message{
 		{
-			ID:     1,
+			ID:     3,
 			ChatID: 1,
-			Data:   "Test Message 1",
+			Data:   "Test Message 3",
 		},
 		{
 			ID:     2,
@@ -88,15 +144,15 @@ func TestStoreNewMessage(t *testing.T) {
 			Data:   "Test Message 2",
 		},
 		{
-			ID:     3,
+			ID:     1,
 			ChatID: 1,
-			Data:   "Test Message 3",
+			Data:   "Test Message 1",
 		},
 	}
 
 	err := messageModel.StoreNewMessage(newMsg)
 
-	result, _ := messageModel.GetMessagesInChat(1, pageNumber, pageSize)
+	result, _ := messageModel.GetMessagesInChat(1, defaultPageNumber, defaultPageSize)
 	assert.NoError(t, err)
 	assert.Equal(t, len(expected), len(result))
 	assert.Equal(t, expected[2].Data, result[2].Data)
