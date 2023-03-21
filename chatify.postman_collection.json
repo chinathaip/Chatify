@@ -1,0 +1,212 @@
+{
+	"info": {
+		"_postman_id": "6b1accce-9ae5-458b-acb5-b8166b16210f",
+		"name": "chatify",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "19387707"
+	},
+	"item": [
+		{
+			"name": "get all chats",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:1111/chats",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "1111",
+					"path": [
+						"chats"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create new chat",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"chat_name\": \"ChatFromAPIJAAA\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:1111/chats",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "1111",
+					"path": [
+						"chats"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "delete chat",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:1111/chats?chat_id=69",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "1111",
+					"path": [
+						"chats"
+					],
+					"query": [
+						{
+							"key": "chat_id",
+							"value": "69",
+							"description": "the ID of chat you want to delete"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get messages in a chat (default)",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNjc5NDExMTg0LCJzdWIiOiIyNzMyNmM1Yi03Mzk1LTQzNWItYmZjMy0zMzBhZDY2ODZlNTMiLCJlbWFpbCI6ImNhcnRvb25hYmVAZ21haWwuY29tIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJnaXRodWIiLCJwcm92aWRlcnMiOlsiZ2l0aHViIl19LCJ1c2VyX21ldGFkYXRhIjp7ImF2YXRhcl91cmwiOiJodHRwczovL2F2YXRhcnMuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3UvOTIzMjEyODA_dj00IiwiZW1haWwiOiJjYXJ0b29uYWJlQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmdWxsX25hbWUiOiJDaGluYXRoYWlQIiwiaXNzIjoiaHR0cHM6Ly9hcGkuZ2l0aHViLmNvbSIsIm5hbWUiOiJDaGluYXRoYWlQIiwicHJlZmVycmVkX3VzZXJuYW1lIjoiY2hpbmF0aGFpcCIsInByb3ZpZGVyX2lkIjoiOTIzMjEyODAiLCJzdWIiOiI5MjMyMTI4MCIsInVzZXJfbmFtZSI6ImNoaW5hdGhhaXAifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJvYXV0aCIsInRpbWVzdGFtcCI6MTY3OTQwNzU4NH1dLCJzZXNzaW9uX2lkIjoiYTVjOWU4NjYtMDA2NS00MDIxLTgzOGItODI4YTY4MTNiZDgzIn0.9IReN_jOuzKUp802QHg2g-jjjntmEbtxqgQjmfoGdXE",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:1111/chats/{{CHAT_ID}}/messages",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "1111",
+					"path": [
+						"chats",
+						"{{CHAT_ID}}",
+						"messages"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get messages (pagination)",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNjc5NDExMTg0LCJzdWIiOiIyNzMyNmM1Yi03Mzk1LTQzNWItYmZjMy0zMzBhZDY2ODZlNTMiLCJlbWFpbCI6ImNhcnRvb25hYmVAZ21haWwuY29tIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJnaXRodWIiLCJwcm92aWRlcnMiOlsiZ2l0aHViIl19LCJ1c2VyX21ldGFkYXRhIjp7ImF2YXRhcl91cmwiOiJodHRwczovL2F2YXRhcnMuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3UvOTIzMjEyODA_dj00IiwiZW1haWwiOiJjYXJ0b29uYWJlQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmdWxsX25hbWUiOiJDaGluYXRoYWlQIiwiaXNzIjoiaHR0cHM6Ly9hcGkuZ2l0aHViLmNvbSIsIm5hbWUiOiJDaGluYXRoYWlQIiwicHJlZmVycmVkX3VzZXJuYW1lIjoiY2hpbmF0aGFpcCIsInByb3ZpZGVyX2lkIjoiOTIzMjEyODAiLCJzdWIiOiI5MjMyMTI4MCIsInVzZXJfbmFtZSI6ImNoaW5hdGhhaXAifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJvYXV0aCIsInRpbWVzdGFtcCI6MTY3OTQwNzU4NH1dLCJzZXNzaW9uX2lkIjoiYTVjOWU4NjYtMDA2NS00MDIxLTgzOGItODI4YTY4MTNiZDgzIn0.9IReN_jOuzKUp802QHg2g-jjjntmEbtxqgQjmfoGdXE",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:1111/chats/{{CHAT_ID}}/messages?pageNumber=1&pageSize=2",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "1111",
+					"path": [
+						"chats",
+						"{{CHAT_ID}}",
+						"messages"
+					],
+					"query": [
+						{
+							"key": "pageNumber",
+							"value": "1",
+							"description": "increment this value to get the next 2 messages\n"
+						},
+						{
+							"key": "pageSize",
+							"value": "2",
+							"description": "number of messages in one page (try not to change this)\n"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "register new user",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"id\": \"db3baf25-af86-4932-b0de-8bcc00ea6189\", //must be a valid UUID from supabase auth\n    \"username\": \"Khing V2\" ,\n    \"imageURL\":\"\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:1111/users",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "1111",
+					"path": [
+						"users"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "CHAT_ID",
+			"value": "41",
+			"type": "string"
+		}
+	]
+}
